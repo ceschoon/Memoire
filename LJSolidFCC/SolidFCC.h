@@ -182,12 +182,8 @@ class SolidFCC : public Density
   
   virtual void doDisplay(string &title, string &file, int seq) const
   {
-#ifdef USE_GRACE    
-    // Write to a grace window
-    if(grace_ == NULL) return;
-
-    grace_->deleteDataSet(seq);
-
+    // find max density point
+    
     int jx = 0;
     int jy = 0;
     int jz = 0;
@@ -203,7 +199,12 @@ class SolidFCC : public Density
                 jy = iy;
                 jz = iz;
               }
+    
+#ifdef USE_GRACE    
+    // Write to a grace window
+    if(grace_ == NULL) return;
 
+    grace_->deleteDataSet(seq);
 
     
     for(int i= 0; i <= Nz(); i++)
@@ -227,7 +228,7 @@ class SolidFCC : public Density
     {
         for(int j=0;j<Ny_;j++)
         {
-            double d = getDensity(i,j,0);
+            double d = getDensity(i,j,jz);
             if (d>max_density) max_density = d;
         }
     }

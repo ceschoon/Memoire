@@ -25,8 +25,82 @@ using namespace std;
 #include "myColor.h"
 
 void check(Density &density, DFT &dft, Interaction &i);
+void DFTcomputation( int argc, char** argv, int Npoints, 
+                     double &density_final, double &numParticles_final,
+                     double &freeEnergy_final                          );
+
+
 
 int main(int argc, char** argv)
+{
+	////////////////////////////// Parameters //////////////////////////////
+	
+	int NpointsMin = 1;
+	int NpointsMax = 1;
+	int NpointsStep = 1;
+	
+	Options options;
+	options.addOption("NpointsMin", &NpointsMin);
+	options.addOption("NpointsMax", &NpointsMax);
+	options.addOption("NpointsStep", &NpointsStep);
+	options.read(argc, argv);
+	
+	Log log("log_min_cell_size.dat");
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << myColor::RED << myColor::BOLD << "Input parameters:" << myColor::RESET << endl <<  "#" << endl;
+	options.write(log);
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	
+	/////////////////////////// DFT Computations ///////////////////////////
+	
+	// initialise variables
+	
+	int NumLatticeSizes = (NpointsMax-NpointsMin)/NpointsStep+1;
+	int Npoints[NumLatticeSizes];
+	
+	for(int i=0; i<NumLatticeSizes; i++)
+		Npoints[i] = NpointsMin+NpointsStep*i;
+	
+	double density[NumLatticeSizes];
+	double numParticles[NumLatticeSizes];
+	double freeEnergy[NumLatticeSizes];
+	
+	// perform DFT computation for each Npoints
+	
+	for(int i=0; i<NumLatticeSizes; i++)
+	{
+		double density_final;
+		double numParticles_final;
+		double freeEnergy_final;
+		
+		DFTcomputation( argc, argv, Npoints[i], density_final, 
+		                numParticles_final, freeEnergy_final   );
+		
+		density[i] = density_final;
+		numParticles[i] = numParticles_final;
+		freeEnergy[i] = freeEnergy_final;
+	}
+	
+	cout << "Npoints = ";
+	for (int i=0;i<NumLatticeSizes; i++) cout << Npoints[i] << " ";
+	cout << endl;
+	
+	cout << "freeEnergy = ";
+	for (int i=0;i<NumLatticeSizes; i++) cout << freeEnergy[i] << " ";
+	cout << endl;
+	
+	return 1;
+}
+
+
+
+  /**
+   *   @brief  Performs DFT computation at fixed FCC cell size
+   */
+
+void DFTcomputation( int argc, char** argv, int Npoints, 
+                     double &density_final, double &numParticles_final,
+                     double &freeEnergy_final                          )
 {
   //////////////////////////////  Parameters ///////////////////////////////
   
@@ -38,7 +112,6 @@ int main(int argc, char** argv)
   string infile;
   
   // geometry
-  int Npoints = 1;
   double dx = 0.1;
   double L[3] = {10,10,10};
 
@@ -78,15 +151,11 @@ int main(int argc, char** argv)
   options.addOption("InputFile", &infile);
 
   // geometry
-  options.addOption("Npoints", &Npoints);
   options.addOption("Dx", &dx);
-  options.addOption("Lx", L);
-  options.addOption("Ly", L+1);
-  options.addOption("Lz", L+2);
   
   // thermodynamics
   options.addOption("kT", &kT);
-  options.addOption("Mu",   &Mu);
+  options.addOption("Mu", &Mu);
   
   // potential
   options.addOption("eps1",   &eps1);
@@ -109,7 +178,7 @@ int main(int argc, char** argv)
   
   options.read(argc, argv);
 
-  Log log("log.dat");
+  Log log("log_DFT.dat");
   log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 
   log << myColor::RED << myColor::BOLD << "Input parameters:" << myColor::RESET << endl <<  "#" << endl;
@@ -245,15 +314,16 @@ int main(int argc, char** argv)
   log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
   log << "Final Omega: " << Omega << endl;
   log << "Excess Omega = " << dOmega << endl;
-
-    
-  return 1;
+  
+  density_final = Natoms/(L[0]*L[1]*L[2]);
+  numParticles_final = Natoms;
+  freeEnergy_final = Omega;
 }
 
 
 
-
 ////////////////////////////////////////////////////////////////////////////
+
 
 void check(Density &density, DFT &dft, Interaction &i1)
 {
