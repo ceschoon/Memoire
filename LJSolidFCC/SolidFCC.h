@@ -57,11 +57,9 @@ class SolidFCC : public Density
    *   @param  number of atoms in the FCC unit cell (taking vacancies into account)
    *   @return  
    */  
+/*
   virtual void initialize(double *L, double gaussian_std, double n_atoms_in_cell)
-  {
-    //TODO: does nothing !?
-    //Density::initialize(density_inside,density_outside);
-    
+  {    
     // list of atoms intersecting FCC unit cell
     vector<vector<double>> atomsPositions;
     
@@ -94,15 +92,15 @@ class SolidFCC : public Density
             
             for (int l=0; l<atomsPositions.size(); l++)
             {
-            	double xl = -L[0]/2+L[0]*atomsPositions[l][0];
-            	double yl = -L[1]/2+L[1]*atomsPositions[l][1];
-            	double zl = -L[2]/2+L[2]*atomsPositions[l][2];
-            	
-            	// add gaussian contribution from atom l
-            	double r2 = (x-xl)*(x-xl)+(y-yl)*(y-yl)+(z-zl)*(z-zl);
-            	double alpha = 1.0/(2*gaussian_std*gaussian_std);
-            	double rho0 = n_atoms_in_cell/4.0;
-            	dd += rho0 * pow(alpha/PI,3.0/2) * exp(-alpha*r2);
+                double xl = -L[0]/2+L[0]*atomsPositions[l][0];
+                double yl = -L[1]/2+L[1]*atomsPositions[l][1];
+                double zl = -L[2]/2+L[2]*atomsPositions[l][2];
+                
+                // add gaussian contribution from atom l
+                double r2 = (x-xl)*(x-xl)+(y-yl)*(y-yl)+(z-zl)*(z-zl);
+                double alpha = 1.0/(2*gaussian_std*gaussian_std);
+                double rho0 = n_atoms_in_cell/4.0;
+                dd += rho0 * pow(alpha/PI,3.0/2) * exp(-alpha*r2);
             }
             
             set_Density_Elem(i,j,k,dd);
@@ -113,7 +111,8 @@ class SolidFCC : public Density
     display_ = new Display(Nx_,Ny_);
 #endif
   }
-
+*/
+   
   virtual void initialize2(double alpha, double a_latt, int ncells, double prefac, double betamu)
   {
     double atoms[4][3];
@@ -144,30 +143,30 @@ class SolidFCC : public Density
 
     for(int i=0;i<Nx_;i++)
       for(int j=0;j<Ny_;j++)
-	for(int k=0;k<Nz_; k++)
-	  {
-	    double x = getX(i);
-	    double y = getY(j);
-	    double z = getZ(k);
+        for(int k=0;k<Nz_; k++)
+          {
+            double x = getX(i);
+            double y = getY(j);
+            double z = getZ(k);
 
-	    double dsum = 0;
+            double dsum = 0;
 
-	    for(int icell=0;icell < ncells; icell++)
-	      for(int jcell=0;jcell < ncells; jcell++)
-		for(int kcell=0;kcell < ncells; kcell++)
-		  for(int l=0;l<4;l++)	     
-		    {
-		      double dx = fabs(x-atoms[l][0]-icell*a_latt); if(dx > L_[0]/2) dx -= L_[0];
-		      double dy = fabs(y-atoms[l][1]-jcell*a_latt); if(dy > L_[1]/2) dy -= L_[1];
-		      double dz = fabs(z-atoms[l][2]-kcell*a_latt); if(dz > L_[2]/2) dz -= L_[2];
+            for(int icell=0;icell < ncells; icell++)
+              for(int jcell=0;jcell < ncells; jcell++)
+                for(int kcell=0;kcell < ncells; kcell++)
+                  for(int l=0;l<4;l++)         
+                    {
+                      double dx = fabs(x-atoms[l][0]-icell*a_latt); if(dx > L_[0]/2) dx -= L_[0];
+                      double dy = fabs(y-atoms[l][1]-jcell*a_latt); if(dy > L_[1]/2) dy -= L_[1];
+                      double dz = fabs(z-atoms[l][2]-kcell*a_latt); if(dz > L_[2]/2) dz -= L_[2];
 
-		      double r2 = dx*dx+dy*dy+dz*dz;
-		      dsum += prefac*pow(alpha/M_PI,1.5)*exp(-alpha*r2);
-		    }
-	    //	    if(dsum > exp(-betamu)) dsum -= (exp(-betamu));
-	    if(dsum < 1e-4) dsum = 1e-4;
-	    set_Density_Elem(i,j,k,dsum);
-	  }
+                      double r2 = dx*dx+dy*dy+dz*dz;
+                      dsum += prefac*pow(alpha/M_PI,1.5)*exp(-alpha*r2);
+                    }
+            //        if(dsum > exp(-betamu)) dsum -= (exp(-betamu));
+            if(dsum < 1e-4) dsum = 1e-4;
+            set_Density_Elem(i,j,k,dsum);
+          }
     cout << "Nx = " << Nx_ << " Ny = " << Ny_ << " Nz = " << Nz_ << endl;
     cout << "Lx = " << L_[0] << " Ly = " << L_[1] << " Lz = " << L_[2] << endl;
     cout << "a = " << a_latt << endl;
@@ -196,45 +195,43 @@ class SolidFCC : public Density
 
     for(int ix = 0; ix < Nx(); ix++)
       for(int iy = 0; iy < Ny(); iy++)
-	for(int iz = 0; iz < Nz(); iz++)
-	    if(getDensity(ix,iy,iz) > dmax)
-	      {
-		dmax = getDensity(ix,iy,iz);
-		jx = ix;
-		jy = iy;
-		jz = iz;
-	      }
+        for(int iz = 0; iz < Nz(); iz++)
+            if(getDensity(ix,iy,iz) > dmax)
+              {
+                dmax = getDensity(ix,iy,iz);
+                jx = ix;
+                jy = iy;
+                jz = iz;
+              }
 
 
     
     for(int i= 0; i <= Nz(); i++)
       {
-	int iz = i-jz;
-	while(iz > Nz()/2) iz -= Nz();
-	while(iz < -Nz()/2) iz += Nz();
-
-	
+        int iz = i-jz;
+        while(iz > Nz()/2) iz -= Nz();
+        while(iz < -Nz()/2) iz += Nz();
+    
         double x = getZ(iz);
-	//        grace_->addPoint(x,getDensity(Nx()/2,Ny()/2,i),seq);
-	grace_->addPoint(x,getDensity(jx,jy,i),seq);
+        grace_->addPoint(x,getDensity(jx,jy,i),seq);
       }
     grace_->setTitle(title.c_str());
     grace_->redraw();
 #endif
 #ifdef USE_MGL
-	// find max density on plane
-	
-	double max_density = 0;
-	
-	for(int i=0;i<Nx_;i++)
-	{
-    	for(int j=0;j<Ny_;j++)
-    	{
-    		double d = getDensity(i,j,0);
-    		if (d>max_density) max_density = d;
-    	}
-	}
-	
+    // find max density on plane
+    
+    double max_density = 0;
+    
+    for(int i=0;i<Nx_;i++)
+    {
+        for(int j=0;j<Ny_;j++)
+        {
+            double d = getDensity(i,j,0);
+            if (d>max_density) max_density = d;
+        }
+    }
+    
     // make a png snapshot --> Adjusted to max density
     
     for(int i=0;i<Nx_;i++)
@@ -248,7 +245,7 @@ class SolidFCC : public Density
     string f1 = file1.str();
     
     display_->doDisplay(t1, f1);
-#endif        
+#endif       
   }  
 
  protected:
@@ -268,4 +265,4 @@ class SolidFCC : public Density
 
 
 
-#endif // SLIT_PORE2__
+#endif // __LUTSKO_DROPLET__
