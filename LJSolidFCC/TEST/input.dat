@@ -1,6 +1,6 @@
 ######## Control #######
 
-nCores = 20
+nCores = 20 
 
 #InputFile = ./snapshot_s0.dat
 #IntegrationPointsFile = ..//..//SS31-Mar-2016//ss109.05998
@@ -9,7 +9,7 @@ IntegrationPointsFile = ..//..//SS31-Mar-2016//ss325.52978
 ######## Geometry #######
 
 NpointsMin = 132
-NpointsMax = 134
+NpointsMax = 138
 NpointsStep = 2
 Dx = 0.0125
 

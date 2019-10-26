@@ -6,7 +6,7 @@ project(LJSolidFCC)
 # MODIFY: This needs to point to the Lib directory
 set(PATH_TO_DFT_LIB ${PROJECT_SOURCE_DIR}/../Lib)
 
-# MODIFY: this is the app file 
+# MODIFY: this is the app file
 add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp)
 
 #MODIFY: enable these lines if you want to use Grace (Grace.h, Grace.cpp)

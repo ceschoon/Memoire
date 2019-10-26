@@ -15,6 +15,8 @@ using namespace std;
 
 #include <gsl/gsl_sf_lambert.h>
 
+#include <armadillo>
+
 #include "options.h"
 #include "TimeStamp.h"
 
@@ -25,10 +27,16 @@ using namespace std;
 #include "myColor.h"
 
 void check(Density &density, DFT &dft, Interaction &i);
-void DFTcomputation( int argc, char** argv, int Npoints, 
+void DFTcomputation( int argc, char** argv, int Npoints,
                      double &density_final, double &numParticles_final,
                      double &freeEnergy_final                          );
 
+
+// TODO
+// Subtility: Do not know where the minima relative to Npoints is.
+//            and there can be more than one minimum.
+// => Plot the free energy landscape (gnuplot) (grace? if in file)
+// => Fit only the points near the global minimum
 
 
 int main(int argc, char** argv)
@@ -51,7 +59,9 @@ int main(int argc, char** argv)
 	options.write(log);
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
 	
+	
 	/////////////////////////// DFT Computations ///////////////////////////
+	
 	
 	// initialise variables
 	
@@ -81,13 +91,64 @@ int main(int argc, char** argv)
 		freeEnergy[i] = freeEnergy_final;
 	}
 	
-	cout << "Npoints = ";
-	for (int i=0;i<NumLatticeSizes; i++) cout << Npoints[i] << " ";
-	cout << endl;
+	// Report
 	
-	cout << "freeEnergy = ";
-	for (int i=0;i<NumLatticeSizes; i++) cout << freeEnergy[i] << " ";
-	cout << endl;
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "Npoints = ";
+	for (int i=0;i<NumLatticeSizes; i++) log << Npoints[i] << " ";
+	log << endl;
+	
+	log << "freeEnergy = ";
+	for (int i=0;i<NumLatticeSizes; i++) log << freeEnergy[i] << " ";
+	log << endl;
+	
+	log << "density = ";
+	for (int i=0;i<NumLatticeSizes; i++) log << density[i] << " ";
+	log << endl;
+	
+	log << "numParticles = ";
+	for (int i=0;i<NumLatticeSizes; i++) log << numParticles[i] << " ";
+	log << endl;
+	
+	
+	//////////////////////////// Parabolic Fit /////////////////////////////
+	
+	
+	// find the Npoints that minimises the free energy and the minimum value
+	
+	arma::vec x(NumLatticeSizes);
+	arma::vec y(NumLatticeSizes);
+	
+	for (int i=0; i<NumLatticeSizes; i++) x(i) = Npoints[i];
+	for (int i=0; i<NumLatticeSizes; i++) y(i) = freeEnergy[i];
+	
+	arma::vec polyFreeEnergy = arma::polyfit(x,y,2);
+	
+	double Npoints_min = -1.0/2*polyFreeEnergy(1)/polyFreeEnergy(0);
+	double freeEnergy_min = polyFreeEnergy(0)*Npoints_min*Npoints_min +
+	                        polyFreeEnergy(1)*Npoints_min + polyFreeEnergy(2);
+	
+	// find the corresponding values of the density and number of particles
+	
+	for (int i=0; i<NumLatticeSizes; i++) y(i) = density[i];
+	arma::vec polyDensity = arma::polyfit(x,y,2);
+	
+	double density_min = polyDensity(0)*Npoints_min*Npoints_min +
+	                     polyDensity(1)*Npoints_min + polyDensity(2);
+	
+	for (int i=0; i<NumLatticeSizes; i++) y(i) = numParticles[i];
+	arma::vec polyNumParticles = arma::polyfit(x,y,2);
+	
+	double numParticles_min = polyNumParticles(0)*Npoints_min*Npoints_min +
+	                          polyNumParticles(1)*Npoints_min + polyNumParticles(2);
+	
+	// Report
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "Min Npoints = " << Npoints_min << endl;
+	log << "Min Free Energy = " << freeEnergy_min << endl;
+	log << "Min Density = " << density_min << endl;
+	log << "Min Number of Particles = " << numParticles_min << endl;
 	
 	return 1;
 }
@@ -165,7 +226,7 @@ void DFTcomputation( int argc, char** argv, int Npoints,
   // density initialisation
   options.addOption("prefac", &prefac);
   options.addOption("ncopy", &ncopy);
-  options.addOption("Nval", &Nvac);
+  options.addOption("Nvac", &Nvac);
   options.addOption("alpha", &alpha);
 
   // minimisation
@@ -259,7 +320,6 @@ void DFTcomputation( int argc, char** argv, int Npoints,
   // Report
   log << "Lx = " << L[0] << endl;
   log << "HSD 1 = " << hsd1 << endl;
-
 
 
   if(! infile.empty())
