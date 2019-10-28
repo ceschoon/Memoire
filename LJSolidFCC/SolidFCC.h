@@ -112,8 +112,8 @@ class SolidFCC : public Density
 #endif
   }
 */
-   
-  virtual void initialize2(double alpha, double a_latt, int ncells, double prefac, double betamu)
+
+  virtual void initialize(double alpha, double a_latt, int ncells, double prefac)
   {
     double atoms[4][3];
 
@@ -136,8 +136,78 @@ class SolidFCC : public Density
     cout << "Nx = " << Nx_ << " Ny = " << Ny_ << " Nz = " << Nz_ << endl;
     cout << "Lx = " << L_[0] << " Ly = " << L_[1] << " Lz = " << L_[2] << endl;
     cout << "atoms[3]: " << atoms[3][0] << " " << atoms[3][1] << " " << atoms[3][2] << endl;
+    
+    cout << "alpha = " << alpha << " prefac = " << prefac << endl;
 
-    //    double alpha = 1.0/(2*gaussian_std*gaussian_std);
+    for(int i=0;i<Nx_;i++)
+      for(int j=0;j<Ny_;j++)
+        for(int k=0;k<Nz_; k++)
+          {
+            double x = getX(i);
+            double y = getY(j);
+            double z = getZ(k);
+
+            double dsum = 0;
+
+            for(int icell=0;icell < ncells; icell++)
+              for(int jcell=0;jcell < ncells; jcell++)
+                for(int kcell=0;kcell < ncells; kcell++)
+                  for(int l=0;l<4;l++)         
+                    {
+                      double dx = fabs(x-atoms[l][0]-icell*a_latt); if(dx > L_[0]/2) dx -= L_[0];
+                      double dy = fabs(y-atoms[l][1]-jcell*a_latt); if(dy > L_[1]/2) dy -= L_[1];
+                      double dz = fabs(z-atoms[l][2]-kcell*a_latt); if(dz > L_[2]/2) dz -= L_[2];
+
+                      double r2 = dx*dx+dy*dy+dz*dz;
+                      
+                      // wide gaussian to avoid EtaTooLargeException
+                      double mixing = 0.01;
+                      double alpha_wide = 1/(2*a_latt/2*a_latt/2);
+                      dsum += mixing*prefac*pow(alpha_wide/M_PI,1.5)*exp(-alpha_wide*r2);
+                      
+                      dsum += (1-mixing)*prefac*pow(alpha/M_PI,1.5)*exp(-alpha*r2);
+                    }
+            
+            if(dsum < 1e-4) dsum = 1e-4;
+            set_Density_Elem(i,j,k,dsum);
+          }
+    cout << "Nx = " << Nx_ << " Ny = " << Ny_ << " Nz = " << Nz_ << endl;
+    cout << "Lx = " << L_[0] << " Ly = " << L_[1] << " Lz = " << L_[2] << endl;
+    cout << "a = " << a_latt << endl;
+    cout << "Density = " << 4/(a_latt*a_latt*a_latt) << endl;
+    
+#ifdef USE_MGL
+    // This is an object that writes a png snapshot whenever doDisplay gets called.
+    display_ = new Display(Nx_,Ny_);
+#endif
+  }
+  
+  
+  
+  
+  virtual void initialize2(double alpha, double a_latt, int ncells, double prefac)
+  {
+    double atoms[4][3];
+
+    atoms[0][0] = 0.0;
+    atoms[0][1] = 0.0;
+    atoms[0][2] = 0.0;
+
+    atoms[1][0] = a_latt/2;
+    atoms[1][1] = a_latt/2;
+    atoms[1][2] = 0.0;
+
+    atoms[2][0] = a_latt/2;
+    atoms[2][1] = 0.0;
+    atoms[2][2] = a_latt/2;
+
+    atoms[3][0] = 0.0;
+    atoms[3][1] = a_latt/2;
+    atoms[3][2] = a_latt/2;
+
+    cout << "Nx = " << Nx_ << " Ny = " << Ny_ << " Nz = " << Nz_ << endl;
+    cout << "Lx = " << L_[0] << " Ly = " << L_[1] << " Lz = " << L_[2] << endl;
+    cout << "atoms[3]: " << atoms[3][0] << " " << atoms[3][1] << " " << atoms[3][2] << endl;
     
     cout << "alpha = " << alpha << " prefac = " << prefac << endl;
 
@@ -163,7 +233,7 @@ class SolidFCC : public Density
                       double r2 = dx*dx+dy*dy+dz*dz;
                       dsum += prefac*pow(alpha/M_PI,1.5)*exp(-alpha*r2);
                     }
-            //        if(dsum > exp(-betamu)) dsum -= (exp(-betamu));
+            
             if(dsum < 1e-4) dsum = 1e-4;
             set_Density_Elem(i,j,k,dsum);
           }

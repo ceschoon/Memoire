@@ -8,15 +8,15 @@ IntegrationPointsFile = ..//..//SS31-Mar-2016//ss325.52978
 
 ######## Geometry #######
 
-NpointsMin = 132
-NpointsMax = 138
-NpointsStep = 2
+NpointsMin = 120
+NpointsMax = 130
+NpointsStep = 1
 Dx = 0.0125
 
 ######## Thermodynamics #######
 
 kT = 1.0
-Mu = -1.0
+Mu = -1
 
 ######## Potential #######
 
@@ -29,7 +29,10 @@ rcut1 = 3
 ncopy = 1
 prefac = 0.9999
 Nvac = 0.0025;
-alpha = 100	
+GaussianAlpha = 100	
+GaussianAlphaMin = 50
+GaussianAlphaMax = 5000
+GaussianAlphaStep = 0.3
 
 ######## Minimisation #######
 

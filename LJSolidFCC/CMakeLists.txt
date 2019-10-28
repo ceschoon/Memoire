@@ -15,6 +15,9 @@ add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp)
 #MODIFY: enable these lines if you want to use Display object (Display.h: creates png images)
 set(USE_MGL true)
 
+#MODIFY: enable these lines if you want to restrict the DFT computations to a gaussian profile
+set(RESTRICT_GAUSSIAN_PROFILE true)
+
 ################### End of customizations
 
 ## Set up the compilation
@@ -60,3 +63,8 @@ if(USE_GRACE)
   target_include_directories(${PROJECT_NAME} PUBLIC ${PATH_TO_DFT_LIB}/additionalCode)
   target_link_libraries(${PROJECT_NAME} PUBLIC "grace_np")
 endif()
+
+if(RESTRICT_GAUSSIAN_PROFILE)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC RESTRICT_GAUSSIAN_PROFILE)
+endif()
+
