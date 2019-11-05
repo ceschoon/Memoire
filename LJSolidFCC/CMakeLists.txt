@@ -16,7 +16,7 @@ add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp)
 set(USE_MGL true)
 
 #MODIFY: enable these lines if you want to restrict the DFT computations to a gaussian profile
-set(RESTRICT_GAUSSIAN_PROFILE true)
+#set(RESTRICT_GAUSSIAN_PROFILE true)
 
 ################### End of customizations
 

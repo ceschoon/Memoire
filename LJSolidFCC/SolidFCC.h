@@ -317,7 +317,7 @@ class SolidFCC : public Density
     
     display_->doDisplay(t1, f1);
 #endif       
-  }  
+  }
 
  protected:
   int sequence_;
