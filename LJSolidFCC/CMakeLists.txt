@@ -18,6 +18,9 @@ set(USE_MGL true)
 #MODIFY: enable these lines if you want to restrict the DFT computations to a gaussian profile
 #set(RESTRICT_GAUSSIAN_PROFILE true)
 
+#MODIFY: enable these lines if you want to skip the pre-run to optimise the initial condition 
+#set(NO_GAUSSIAN_PRE_RUN true)
+
 ################### End of customizations
 
 ## Set up the compilation
@@ -66,5 +69,9 @@ endif()
 
 if(RESTRICT_GAUSSIAN_PROFILE)
   target_compile_definitions(${PROJECT_NAME} PUBLIC RESTRICT_GAUSSIAN_PROFILE)
+endif()
+
+if(NO_GAUSSIAN_PRE_RUN)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC NO_GAUSSIAN_PRE_RUN)
 endif()
 

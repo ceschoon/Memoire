@@ -26,6 +26,10 @@ using namespace std;
 #include "SolidPhase.h"
 
 
+// Things to be done
+
+// TODO: More significant digits in number of particles
+//       (print vacancy concentration instead)
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -88,20 +92,12 @@ void minOverNpoints( int argc, char** argv, Log &log,  double kT, double mu,
 	for(int i=0; i<NumLatticeSizes; i++)
 	{
 		bool success_final;
-		double alpha_final;
 		double density_final;
 		double numParticles_final;
 		double freeEnergy_final;
-		
-#ifdef RESTRICT_GAUSSIAN_PROFILE
-		minOverAlpha( argc, argv, log, kT, mu, Npoints[i], alpha_final, density_final, 
-                      numParticles_final, freeEnergy_final, success_final);
-#endif
 
-#ifndef RESTRICT_GAUSSIAN_PROFILE
-		DFTcomputation( argc, argv, log, kT, mu, Npoints[i], -1, true, density_final,
+		DFTcomputation( argc, argv, log, kT, mu, Npoints[i], true, density_final,
 		                numParticles_final, freeEnergy_final, success_final);
-#endif
 
 		successPerNpoint[i] = success_final;
 		density[i] = density_final;
@@ -222,79 +218,285 @@ void minOverNpoints( int argc, char** argv, Log &log,  double kT, double mu,
 
 
 
-
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+// This function is just an intermediate to catch EtaTooLarge exceptions
 
-void minOverAlpha( int argc, char** argv, Log &log, double kT, double mu, int Npoints,
-                   double &alpha_min, double &density_min, 
-                   double &numParticles_min, double &freeEnergy_min,
-                   bool &success)
+void DFTcomputation( int argc, char** argv, Log &log, double kT, double mu, 
+                     int Npoints, bool runMinimizer,
+                     double &density_final, double &numParticles_final,
+                     double &freeEnergy_final, bool &success            )
 {
-	////////////////////////////// Parameters //////////////////////////////
-	
-	double alphaMin = 100;
-	double alphaMax = 100;
-	double alphaStep = 10;
-	
+	try
+	{
+		DFTcomputation2( argc, argv, log, kT, mu, Npoints, runMinimizer,
+		                 density_final, numParticles_final, freeEnergy_final,
+		                 success);
+	}
+	catch( Eta_Too_Large_Exception &e)
+	{
+		success = false;
+	}
+}
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+// Remark: the free energy is given per unit volume
+
+void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu, 
+                      int Npoints, bool runMinimizer,
+                      double &density_final, double &numParticles_final,
+                      double &freeEnergy_final, bool &success            )
+{
+	////////////////////////////  Parameters ///////////////////////////////
+
+	// control
+	int nCores = 6;
+	bool showGraphics = true;
+	string pointsFile("..//SS31-Mar-2016//ss109.05998");
+	string outfile("dump.dat");
+	string infile;
+
+	// geometry
+	double dx = 0.1;
+	double L[3] = {10,10,10};
+
+	// thermodynamics -> as input
+
+	// potential
+	double eps1   = 1;
+	double sigma1 = 1;
+	double rcut1  = 3;
+	double hsd1 = -1;
+
+	// density initialisation
+	int ncopy = 1;
+	double prefac = 1;
+	double Nvac = 0;
+	double alpha = 100;
+	double alphaMin = 50;
+	double alphaMax = 5000;
+	double alphaStep = 0.3;
+
+	// minimisation
+	double forceLimit = 1.0;
+	double dt = 1e-3;
+	double dtMax = 1;
+	double alpha_start = 0.01;
+	double alphaFac = 1;
+	int maxSteps = -1;
+
+	////////////////////////////////////////////
+
 	Options options;
+
+	// control
+	options.addOption("nCores", &nCores);
+	options.addOption("ShowGraphics", &showGraphics);
+	options.addOption("OutputFile", &outfile);
+	options.addOption("IntegrationPointsFile", &pointsFile);
+	options.addOption("InputFile", &infile);
+
+	// geometry
+	options.addOption("Dx", &dx);
+
+	// potential
+	options.addOption("eps1",   &eps1);
+	options.addOption("sigma1", &sigma1);
+	options.addOption("rcut1",  &rcut1);
+
+	// density initialisation
+	options.addOption("prefac", &prefac);
+	options.addOption("ncopy", &ncopy);
+	options.addOption("Nvac", &Nvac);
+	options.addOption("GaussianAlpha", &alpha);
 	options.addOption("GaussianAlphaMin", &alphaMin);
 	options.addOption("GaussianAlphaMax", &alphaMax);
-	options.addOption("GaussianAlphaStep", &alphaStep);
+	options.addOption("GaussianAlphaLogStep", &alphaStep);
+
+	// minimisation
+	options.addOption("ForceTerminationCriterion",&forceLimit);
+	options.addOption("TimeStep", &dt);
+	options.addOption("TimeStepMax", &dtMax);
+	options.addOption("AlphaStart", &alpha_start);
+	options.addOption("AlphaFac", &alphaFac);
+	options.addOption("MaxSteps", &maxSteps);
+
 	options.read(argc, argv);
-	
+
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
-	log << myColor::RED << myColor::BOLD << "--- Minimisation over alpha ---" << myColor::RESET << endl <<  "#" << endl;
+	log << myColor::RED << myColor::BOLD << "--- DFT computation at fixed kT, mu, Npoints and alpha ---" << myColor::RESET << endl <<  "#" << endl;
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
-	log << myColor::RED << myColor::BOLD << "Input parameters:" << myColor::RESET << endl <<  "#" << endl;
-	options.write(log);
+
+	log << myColor::RED << myColor::BOLD << "Input parameters (arguments):" << myColor::RESET << endl <<  "#" << endl;
+
+	log << "kT = " << kT << endl;
+	log << "mu = " << mu << endl;
+	log << "Npoints = " << Npoints << endl;
+	log << "alpha = " << alpha << endl;
+
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
-	
-	
-	/////////////////////////// DFT Computations ///////////////////////////
-	
+
+	log << myColor::RED << myColor::BOLD << "Input parameters (file):" << myColor::RESET << endl <<  "#" << endl;
+
+	options.write(log);
+
+	#ifdef USE_OMP    
+	omp_set_dynamic(0);
+	omp_set_num_threads(nCores);
+
+	int fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+	log << "omp max threads = " << omp_get_max_threads() << endl;
+	#endif
+
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+
+	////////////////////////////////////
+
+	success = true;
+
+	int ncopy3= ncopy*ncopy*ncopy;
+
+	double Natoms  = 4*(1-Nvac)*ncopy3;
+	double alatt   = 0;
+	double Density = 0;
+
+	if(dx > 0)
+	{
+		L[0] = L[1] = L[2] = Npoints*dx;
+		alatt = L[0]/ncopy;
+		Density = 4*(1-Nvac)/(alatt*alatt*alatt);
+	} else {
+		dx = L[0]/Npoints;
+		alatt = pow(4*(1-Nvac)/Density,1.0/3.0);
+		L[0] = L[1] = L[2] = ncopy*alatt;
+	}
+
+
+
+
+
+	///////////////////////  Initialise the System /////////////////////////
+
+
+	//////////////////////////////////////
+	////// Create potential && effective hsd
+
+	LJ potential1(sigma1, eps1, rcut1);
+
+	if(hsd1 < 0) hsd1 = potential1.getHSD(kT);
+
+	/////////////////////////////////////
+	// Create density objects
+
+
+	SolidFCC theDensity1(dx, L, hsd1);
+
+	//theDensity1.initialize2(alpha, alatt, ncopy, prefac);
+	//theDensity1.initialize(alpha, alatt, ncopy, prefac);
+
+
+	/////////////////////////////////////
+	// Create the species objects
+
+	FMT_Species species1(theDensity1,hsd1,pointsFile);
+
+	Interaction i1(species1,species1,potential1,kT,log);
+
+	/////////////////////////////////////
+	// Create the hard-sphere object
+	RSLT fmt;
+
+	/////////////////////////////////////
+	// DFT object
+
+	DFT dft(&species1);
+
+	dft.addHardCoreContribution(&fmt);  
+	dft.addInteraction(&i1);
+
+	/////////////////////////////////////////////////////
+	// Report
+	log << "Lx = " << L[0] << endl;
+	log << "HSD 1 = " << hsd1 << endl;
+
+
+	if(! infile.empty())
+	theDensity1.readDensity(infile.c_str());
+
+
+	///////////////////////////////////////////////
+	// Fix the chemical potential of the surfactant species.
+
+	species1.setChemPotential(mu);
+
+	//  check(theDensity1, dft,i1);
+
+	log <<  myColor::GREEN << "=================================" <<  myColor::RESET << endl;
+
+
+
+
+
+	//////////////////// Pre-run with gaussian profiles ////////////////////
+
+#ifndef NO_GAUSSIAN_PRE_RUN
+
+	// We first do multiple runs with different widths of the gaussian 
+	// in order to select the best profile as the initial condition of the 
+	// full computation. 
 	
 	// initialise variables
 	
-	success = true;
-	
-	//int NumAlphas = (alphaMax-alphaMin)/alphaStep+1;
 	int NumAlphas = std::log(alphaMax/alphaMin)/alphaStep+1;
-	vector<double> alpha(NumAlphas);
+	vector<double> alphaVec(NumAlphas);
 	
 	for(int i=0; i<NumAlphas; i++)
-		//alpha[i] = alphaMin+alphaStep*i;
-		alpha[i] = alphaMin * exp(alphaStep*i);
+		alphaVec[i] = alphaMin * exp(alphaStep*i);
 	
-	vector<bool> successPerAlpha(NumAlphas, true);
+	vector<bool> successPerAlpha(NumAlphas, true); // useless in the current code
 	vector<double> density(NumAlphas);
 	vector<double> numParticles(NumAlphas);
 	vector<double> freeEnergy(NumAlphas);
 	
-	// perform DFT computation for each Npoints
+	// DFT computation for each alpha
 	
 	for(int i=0; i<NumAlphas; i++)
 	{
-		bool success_final;
-		double density_final;
-		double numParticles_final;
-		double freeEnergy_final;
+		bool success_temp = true; 
+		double density_temp;
+		double numParticles_temp;
+		double freeEnergy_temp; // per unit volume 
 		
-		DFTcomputation( argc, argv, log, kT, mu, Npoints, alpha[i], false, density_final,
-		                numParticles_final, freeEnergy_final, success_final);
+		theDensity1.initialize(alphaVec[i], alatt, ncopy, prefac);
 		
-		successPerAlpha[i] = success_final;
-		density[i] = density_final;
-		numParticles[i] = numParticles_final;
-		freeEnergy[i] = freeEnergy_final;
+		numParticles_temp = theDensity1.getNumberAtoms();
+		density_temp = numParticles_temp/(L[0]*L[1]*L[2]);
+		freeEnergy_temp = dft.calculateFreeEnergyAndDerivatives(false)/(L[0]*L[1]*L[2]);
+		
+		successPerAlpha[i] = success_temp;
+		density[i] = density_temp;
+		numParticles[i] = numParticles_temp;
+		freeEnergy[i] = freeEnergy_temp;
 	}
 	
 	// Report
 	
 	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
-	log << "alpha = ";
-	for (int i=0;i<NumAlphas; i++) log << alpha[i] << " ";
+	log << "--- Pre-run with gaussian profiles ---" << endl <<  "#" << endl;
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "alphaVec = ";
+	for (int i=0;i<NumAlphas; i++) log << alphaVec[i] << " ";
 	log << endl;
 	
 	log << "freeEnergy = ";
@@ -312,28 +514,18 @@ void minOverAlpha( int argc, char** argv, Log &log, double kT, double mu, int Np
 	log << "successPerAlpha = ";
 	for (int i=0;i<NumAlphas; i++) log << successPerAlpha[i] << " ";
 	log << endl;
+
+
+
+
+
+
+	//////////////// Find the best alpha for the gaussians /////////////////
 	
+	// We find the best alpha by minimizing the free energy 
+	// We do the minimisation of a parabolic fit near the min data point
 	
-	/////////////////////// Plot Free Energy Profile ///////////////////////
-	
-	/*
-	string outFile = "free_energy_profile_alpha";
-	//string outFile =  "free_energy_profile_alpha_Npoints="+Npoints+"_mu="+mu+"_kT="+kT
-	
-	Grace graphFreeEnergy(800,600,1,false);
-	graphFreeEnergy.addDataSet(alpha, freeEnergy);
-	//graphFreeEnergy.setTitle("Free Energy profile for Npoints="+Npoints+", mu="+mu+" and kT="+kT);
-	graphFreeEnergy.setTitle("Free Energy profile");
-	graphFreeEnergy.setXAxisLabel("Gaussian alpha parameter");
-	graphFreeEnergy.setYAxisLabel("Free Energy");
-	graphFreeEnergy.redraw();
-	graphFreeEnergy.printToFile(outFile,4);
-	*/
-	
-	
-	//////////////////////////// Parabolic Fit /////////////////////////////
-	
-	// find the data point that minimise the free energy
+	// find the data point that minimises the free energy
 	
 	int index_min = 0;
 	for (int i=0; i<NumAlphas; i++)
@@ -362,28 +554,28 @@ void minOverAlpha( int argc, char** argv, Log &log, double kT, double mu, int Np
 	arma::vec x(numIndicesToFit);
 	arma::vec y(numIndicesToFit);
 	
-	for (int i=0; i<numIndicesToFit; i++) x(i) = alpha[indicesToFit[i]];
+	for (int i=0; i<numIndicesToFit; i++) x(i) = alphaVec[indicesToFit[i]];
 	for (int i=0; i<numIndicesToFit; i++) y(i) = freeEnergy[indicesToFit[i]];
 	
 	arma::vec polyFreeEnergy = arma::polyfit(x,y,2);
 	
-	alpha_min = -1.0/2*polyFreeEnergy(1)/polyFreeEnergy(0);
-	freeEnergy_min = polyFreeEnergy(0)*alpha_min*alpha_min +
-	                 polyFreeEnergy(1)*alpha_min + polyFreeEnergy(2);
+	double alpha_min = -1.0/2*polyFreeEnergy(1)/polyFreeEnergy(0);
+	double freeEnergy_min = polyFreeEnergy(0)*alpha_min*alpha_min +
+	                        polyFreeEnergy(1)*alpha_min + polyFreeEnergy(2);
 	
 	// find the corresponding values of the density and number of particles
 	
 	for (int i=0; i<numIndicesToFit; i++) y(i) = density[indicesToFit[i]];
 	arma::vec polyDensity = arma::polyfit(x,y,2);
 	
-	density_min = polyDensity(0)*alpha_min*alpha_min +
-	              polyDensity(1)*alpha_min + polyDensity(2);
+	double density_min = polyDensity(0)*alpha_min*alpha_min +
+	                     polyDensity(1)*alpha_min + polyDensity(2);
 	
 	for (int i=0; i<numIndicesToFit; i++) y(i) = numParticles[indicesToFit[i]];
 	arma::vec polyNumParticles = arma::polyfit(x,y,2);
 	
-	numParticles_min = polyNumParticles(0)*alpha_min*alpha_min +
-	                   polyNumParticles(1)*alpha_min + polyNumParticles(2);
+	double numParticles_min = polyNumParticles(0)*alpha_min*alpha_min +
+	                          polyNumParticles(1)*alpha_min + polyNumParticles(2);
 	
 	// Report
 	
@@ -392,270 +584,68 @@ void minOverAlpha( int argc, char** argv, Log &log, double kT, double mu, int Np
 	log << "(Gaussian alpha) Min Free Energy = " << freeEnergy_min << endl;
 	log << "(Gaussian alpha) Min Density = " << density_min << endl;
 	log << "(Gaussian alpha) Min Number of Particles = " << numParticles_min << endl;
-}
+
+	// choose the minimum as the starting point for the full (unrestricted) minimisation 
+
+	alpha = alpha_min;
+
+#endif
 
 
 
 
+	//////////////  Full Minimisation with the best profile ////////////////
+
+#ifndef RESTRICT_GAUSSIAN_PROFILE
+
+	theDensity1.initialize(alpha, alatt, ncopy, prefac);
+	
+	fireMinimizer2 minimizer(dft,log);
+	minimizer.setForceTerminationCriterion(forceLimit);
+	minimizer.setTimeStep(dt);
+	minimizer.setTimeStepMax(dtMax);
+	minimizer.setAlphaStart(alpha_start);
+	minimizer.setAlphaFac(alphaFac);
+	minimizer.run(maxSteps);
+	
+	// Sanity check
+
+	//if (minimizer.getCalls() >= maxSteps-1 && maxSteps > 0)
+	// TODO: check if F is stable with err>1
+	// success = false;
+
+#endif
 
 
 
 
+	////////////////////////////  Final Results ////////////////////////////
 
+#ifndef NO_GAUSSIAN_PRE_RUN
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "Final Omega/V: " << freeEnergy_min << endl;
+	
+	density_final = density_min;
+	numParticles_final = numParticles_min;
+	freeEnergy_final = freeEnergy_min;
+	
+#endif
 
+#ifndef RESTRICT_GAUSSIAN_PROFILE
+	
+	Natoms = theDensity1.getNumberAtoms();
+	double Omega = minimizer.getF();
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "Final Omega/V: " << Omega/(L[0]*L[1]*L[2]) << endl;
+	
+	density_final = Natoms/(L[0]*L[1]*L[2]);
+	numParticles_final = Natoms;
+	freeEnergy_final = Omega/(L[0]*L[1]*L[2]);
+	
+#endif
 
-////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-
-// This function is just an intermediate to catch EtaTooLarge exceptions
-
-void DFTcomputation( int argc, char** argv, Log &log, double kT, double mu, 
-                     int Npoints, double alpha, bool runMinimizer,
-                     double &density_final, double &numParticles_final,
-                     double &freeEnergy_final, bool &success            )
-{
-	try
-	{
-		DFTcomputation2( argc, argv, log, kT, mu, Npoints, alpha, runMinimizer,
-		                 density_final, numParticles_final, freeEnergy_final,
-		                 success);
-	}
-	catch( Eta_Too_Large_Exception &e)
-	{
-		success = false;
-	}
-}
-
-
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-
-
-// Remark: the free energy is given per unit volume
-
-void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu, 
-                      int Npoints, double alpha, bool runMinimizer,
-                      double &density_final, double &numParticles_final,
-                      double &freeEnergy_final, bool &success            )
-{
-  //////////////////////////////  Parameters ///////////////////////////////
-  
-  // control
-  int nCores = 6;
-  bool showGraphics = true;
-  string pointsFile("..//SS31-Mar-2016//ss109.05998");
-  string outfile("dump.dat");
-  string infile;
-  
-  // geometry
-  double dx = 0.1;
-  double L[3] = {10,10,10};
-
-  // thermodynamics -> as input
-
-  // potential
-  double eps1   = 1;
-  double sigma1 = 1;
-  double rcut1  = 3;
-  double hsd1 = -1;
-  
-  // density initialisation
-  int ncopy = 1;
-  double prefac = 1;
-  double Nvac = 0;
-  
-  // minimisation
-  double forceLimit = 1e-4;
-  double dt = 1e-3;
-  double dtMax = 1;
-  double alpha_start = 0.01;
-  double alphaFac = 1;
-  int maxSteps = -1;
-  
-  ////////////////////////////////////////////
-  
-  Options options;
-  
-  // control
-  options.addOption("nCores", &nCores);
-  options.addOption("ShowGraphics", &showGraphics);
-  options.addOption("OutputFile", &outfile);
-  options.addOption("IntegrationPointsFile", &pointsFile);
-  options.addOption("InputFile", &infile);
-
-  // geometry
-  options.addOption("Dx", &dx);
-  
-  // potential
-  options.addOption("eps1",   &eps1);
-  options.addOption("sigma1", &sigma1);
-  options.addOption("rcut1",  &rcut1);
-  
-  // density initialisation
-  options.addOption("prefac", &prefac);
-  options.addOption("ncopy", &ncopy);
-  options.addOption("Nvac", &Nvac);
-  if (alpha<0) options.addOption("GaussianAlpha", &alpha);
-
-  // minimisation
-  options.addOption("ForceTerminationCriterion",&forceLimit);
-  options.addOption("TimeStep", &dt);
-  options.addOption("TimeStepMax", &dtMax);
-  options.addOption("AlphaStart", &alpha_start);
-  options.addOption("AlphaFac", &alphaFac);
-  options.addOption("MaxSteps", &maxSteps);
-  
-  options.read(argc, argv);
-
-  log << myColor::GREEN << "=================================" << myColor::RESET << endl;
-  log << myColor::RED << myColor::BOLD << "--- DFT computation at fixed kT, mu, Npoints and alpha ---" << myColor::RESET << endl <<  "#" << endl;
-  log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
-
-  log << myColor::RED << myColor::BOLD << "Input parameters (arguments):" << myColor::RESET << endl <<  "#" << endl;
-
-  log << "kT = " << kT << endl;
-  log << "mu = " << mu << endl;
-  log << "Npoints = " << Npoints << endl;
-  log << "alpha = " << alpha << endl;
-  
-  log << myColor::GREEN << "=================================" << myColor::RESET << endl;
-  
-  log << myColor::RED << myColor::BOLD << "Input parameters (file):" << myColor::RESET << endl <<  "#" << endl;
-  
-  options.write(log);
-  
-  #ifdef USE_OMP    
-  omp_set_dynamic(0);
-  omp_set_num_threads(nCores);
-
-  int fftw_init_threads();
-  fftw_plan_with_nthreads(omp_get_max_threads());
-  log << "omp max threads = " << omp_get_max_threads() << endl;
-  #endif
-
-  log << myColor::GREEN << "=================================" << myColor::RESET << endl;
-  
-  ////////////////////////////////////
-  
-  success = true;
-  
-  int ncopy3= ncopy*ncopy*ncopy;
-
-  double Natoms  = 4*(1-Nvac)*ncopy3;
-  double alatt   = 0;
-  double Density = 0;
-  
-  if(dx > 0)
-    {
-      L[0] = L[1] = L[2] = Npoints*dx;
-      alatt = L[0]/ncopy;
-      Density = 4*(1-Nvac)/(alatt*alatt*alatt);
-    } else {
-    dx = L[0]/Npoints;
-    alatt = pow(4*(1-Nvac)/Density,1.0/3.0);
-    L[0] = L[1] = L[2] = ncopy*alatt;  
-  }
-
-  ////////////////////////  Initialise the System //////////////////////////
-  
-  
-  //////////////////////////////////////
-  ////// Create potential && effective hsd
-
-  LJ potential1(sigma1, eps1, rcut1);
-
-  if(hsd1 < 0) hsd1 = potential1.getHSD(kT);
-  
-  /////////////////////////////////////
-  // Create density objects
-
-
-  SolidFCC theDensity1(dx, L, hsd1);
-
-  //theDensity1.initialize2(alpha, alatt, ncopy, prefac);
-  theDensity1.initialize(alpha, alatt, ncopy, prefac);
-
-  
-  /////////////////////////////////////
-  // Create the species objects
-  
-  FMT_Species species1(theDensity1,hsd1,pointsFile);
-
-  Interaction i1(species1,species1,potential1,kT,log);
-
-  /////////////////////////////////////
-  // Create the hard-sphere object
-  RSLT fmt;
-  
-  /////////////////////////////////////
-  // DFT object
-
-  DFT dft(&species1);
-
-  dft.addHardCoreContribution(&fmt);  
-  dft.addInteraction(&i1);
-  
-  /////////////////////////////////////////////////////
-  // Report
-  log << "Lx = " << L[0] << endl;
-  log << "HSD 1 = " << hsd1 << endl;
-
-
-  if(! infile.empty())
-    theDensity1.readDensity(infile.c_str());
-
-  
-  ///////////////////////////////////////////////
-  // Fix the chemical potential of the surfactant species.
-
-  double N = theDensity1.getNumberAtoms();
-  //    species1.setFixedMass(N);
-  //    log << "N fixed at " << N << endl;
-  //    species1.setChemPotential(0);
-
-  species1.setChemPotential(mu);
-
-  //  check(theDensity1, dft,i1);
-
-
-  log <<  myColor::GREEN << "=================================" <<  myColor::RESET << endl;
-  
-  /////////////////////////////  Minimisation //////////////////////////////
-  
-  fireMinimizer2 minimizer(dft,log);
-  minimizer.setForceTerminationCriterion(forceLimit);
-  minimizer.setTimeStep(dt);
-  minimizer.setTimeStepMax(dtMax);
-  minimizer.setAlphaStart(alpha_start);
-  minimizer.setAlphaFac(alphaFac);
-  if (runMinimizer) minimizer.run(maxSteps);
-
-  /////////////////////////////  Final Results /////////////////////////////
-
-  Natoms = theDensity1.getNumberAtoms();
-  double Omega;
-  if (runMinimizer)
-    Omega = minimizer.getF();
-  else
-    Omega = dft.calculateFreeEnergyAndDerivatives(false);
-
-  log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
-  log << "Final Omega: " << Omega << endl;
-  
-  density_final = Natoms/(L[0]*L[1]*L[2]);
-  numParticles_final = Natoms;
-  freeEnergy_final = Omega/(L[0]*L[1]*L[2]);
-  
-  // Sanity check
-  
-  //if (minimizer.getCalls() >= maxSteps-1 && maxSteps > 0)
-    // TODO: check if F is stable with err>1
-    // success = false;
 }
 
 
