@@ -68,33 +68,26 @@ double DFT::calculateFreeEnergyAndDerivatives(bool onlyFex)
 
 double DFT::calculateFreeEnergyAndDerivatives_internal_(bool onlyFex)
 {
-  double F = 0.0;
-  
-  if(onlyFex) return F; // do nothing.
+  Summation F;
 
-  for(auto &species : allSpecies_)
-    {
-      const Density& density = species->getDensity();
-      double dV = density.dV();
+  // Ideal gas contribution  
+  if(!onlyFex) 
+    for(auto &species : allSpecies_)
+      {
+	const Density& density = species->getDensity();
+	double dV = density.dV();
       
-      for(long i=0;i<density.Ntot();i++)
-	{
-	  double d0 = density.getDensity(i);
-	  if(d0 > -SMALL_VALUE)
-	    {
-	      F += (d0*log(d0)-d0)*dV;
-	      species->addToForce(i,log(d0)*dV);
-	    } else {
-	    species->addToForce(i,log(SMALL_VALUE)*dV);
+	for(long i=0;i<density.Ntot();i++)
+	  {
+	    double d0 = density.getDensity(i);
+	    if(d0 <= -SMALL_VALUE) d0 = SMALL_VALUE; // should never happen!
+	    F += (d0*log(d0)-d0)*dV;
+	    species->addToForce(i,log(d0)*dV);
 	  }
-	}
-    }
-  
-  
+      }
   for(auto &species : allSpecies_)
     F += species->externalField(true); // bCalcForces = true: obsolete?  
-  
-  
+
   if(fmt_)
     {    
       try{
@@ -103,7 +96,6 @@ double DFT::calculateFreeEnergyAndDerivatives_internal_(bool onlyFex)
 	throw e;
       }
     }
-
   // Mean field contribution to F and dF
   // Need the following only if the fmt object is not called
   if(!fmt_)
@@ -112,10 +104,8 @@ double DFT::calculateFreeEnergyAndDerivatives_internal_(bool onlyFex)
 	species->doFFT();
       }
   
-  
   for(auto &interaction: DFT::Interactions_)
     F += interaction->getInteractionEnergyAndForces();
 
-  return F;
-  
+  return F.sum();  
 }

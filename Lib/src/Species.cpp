@@ -15,6 +15,7 @@ using namespace std;
 #endif
 
 #include "Species.h"
+#include "myColor.h"
 
 int Species::SequenceNumber_ = 0;
 
@@ -102,6 +103,7 @@ void FMT_Species::generateWeights(string &pointsFile)
   // Generate integration points for spherical surface
 
   cout << endl;
+  cout << myColor::GREEN;
   cout << "///////////////////////////////////////////////////////////" << endl;
   cout << "/////  Generating integration points on sphere " << endl;
 
@@ -176,14 +178,17 @@ void FMT_Species::generateWeights(string &pointsFile)
 
   cout << "/////  Finished: there are " << points.size() << " points " << endl;
   cout << "///////////////////////////////////////////////////////////" << endl;
+  cout << myColor::RESET << endl;
 
 
   // Add up the weights for each point.
   // We throw in all permutations (iperm loop) of the integration points and all reflections (is loop)
   // to establish as much symmetry as possible. Probably unnecessary.    
   cout << endl;
+  cout << myColor::GREEN;
   cout << "///////////////////////////////////////////////////////////" << endl;
   cout << "/////  Generating integration points for sphere volume " << endl;
+  cout << myColor::RESET << endl;
 
   // This is for the radial integral
   int Nr = 128*4;
@@ -191,11 +196,17 @@ void FMT_Species::generateWeights(string &pointsFile)
   // Get some Gauss-Lagrange integration points and weights for the radial integral
   gsl_integration_glfixed_table *tr = gsl_integration_glfixed_table_alloc(Nr);
 
+  // Decide whether or not to do the permuations:
+  int iperm_max = 6; // 1 or 6
+  int is_max = 8; // 1 or 8
+  double inorm = iperm_max*is_max;
+  
   long count = 0;
   for(int pos=0;pos < points.size(); pos++)
     {
-      if(pos%1000 == 0) cout << pos << endl;
-      for(int iperm = 0; iperm < 6; iperm++)      // add permutations
+      
+      if(pos%1000 == 0) {if(pos > 0) cout << '\r'; cout << "\t" << int(double(pos)*100.0/points.size()) << "% finished: " << pos << " out of " << points.size(); cout.flush();}
+      for(int iperm = 0; iperm < iperm_max; iperm++)      // add permutations
 	{
 	  int ii = 0;
 	  int jj = 1;
@@ -211,7 +222,7 @@ void FMT_Species::generateWeights(string &pointsFile)
 	  double y0 = r*points[pos][jj];
 	  double z0 = r*points[pos][kk];
 
-	  for(int is=0;is<8;is++) // add in reflections too
+	  for(int is=0;is<is_max;is++) // add in reflections too
 	    {
 	      double x = x0;
 	      double y = y0;
@@ -227,7 +238,7 @@ void FMT_Species::generateWeights(string &pointsFile)
 
 
 	      // scale the original weight by the number of redundancies (6 x 7 or 6 x 8 depending on if we keep the last reflection)
-	      double ww = points[pos][3]/48.0;
+	      double ww = points[pos][3]/inorm;
 
 	      double v[3]; // used for the vector and tensor densities
 	      v[0] = x/r;
@@ -303,7 +314,7 @@ void FMT_Species::generateWeights(string &pointsFile)
 		  if(is == 6) {y = -y; z = -z;}
 		  if(is == 7) {x = -x; y = -y; z = -z;}
 
-		  double ww = points[pos][3]/48.0;
+		  double ww = points[pos][3]/inorm;
 	      
 		  // Find the cube that contains this point. 
 		  int ix0 = int(x/dx);
@@ -355,10 +366,11 @@ void FMT_Species::generateWeights(string &pointsFile)
 	  d_[TI(1,1)].setWeight(pos, d_[TI(1,1)].getWeight(pos)*d_[SI()].getWeight(pos)/sum);
 	  d_[TI(2,2)].setWeight(pos, d_[TI(2,2)].getWeight(pos)*d_[SI()].getWeight(pos)/sum);
 	}
-    }  
+    }
+  cout << myColor::GREEN;
   cout << "/////  Finished.  " << endl;
   cout << "///////////////////////////////////////////////////////////" << endl;
-
+  cout << myColor::RESET << endl;
 
   size_t Npos = density_.Ntot();
   
@@ -391,7 +403,7 @@ void FMT_Species::generateWeights(string &pointsFile)
     s.dump(of);  
 }
 
-
+/*
 VDW_Species::VDW_Species(Density& density, double hsd, string &pointsFile, Potential1& potential, double kT)
   : FMT_Species(density,hsd,pointsFile), potential_(potential), a_vdw_(0)
 {
@@ -432,3 +444,4 @@ VDW_Species::VDW_Species(Density& density, double hsd, string &pointsFile, Poten
   // Now save the FFT of the field  
   w_att_.do_real_2_fourier();
 }
+*/

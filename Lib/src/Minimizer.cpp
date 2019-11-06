@@ -51,7 +51,7 @@ void Minimizer::run(long maxSteps)
     f_abs_max_ = get_convergence_monitor();
 
     log_.precision(12);    
-    log_ << setw(12) << step_counter_ 
+    log_ << setw(12) << step_counter_
 	 << setw(20) << myColor::YELLOW << F_  << myColor::RESET
 	 << setw(20) << F_/Ntotal
 	 << setw(20) << F_/Volume
@@ -64,7 +64,7 @@ void Minimizer::run(long maxSteps)
 
     
     if(std::isnan(f_abs_max_))
-	log_  << "INF detected" << endl; //: min = " << dF_.min() << " max = " << dF_.max() << endl;
+	log_  << "INF detected" << endl; 
 
     draw_after();
 
@@ -114,46 +114,14 @@ double Minimizer::getDF_DX()
   //  dF_.Schur(x_,dF_);
   //  dF_.MultBy(2);
 
-  double dV = dft_.lattice().dV();
-
-  double ff = 0;
-  double im = 0;
-
-  int ix = 0;
-  int iy = 0;
-  int iz = 0;
 
   for(int Jspecies = 0; Jspecies<dft_.getNumberOfSpecies(); Jspecies++)
     {
       auto &f = dft_.getDF(Jspecies);
       for(long i=0;i<f.size();i++)
 	{
-	  bool onBoundary = false;
-
-	  if(bFrozenBoundary_)
-	    {
-	      iz++;
-	      if(iz == dft_.lattice().Nz())
-		{
-		  iz = 0;
-		  iy++;
-		  if(iy == dft_.lattice().Ny())
-		    {
-		      iy = 0;
-		      ix++;		  
-		    }
-		}
-      
-	      if(ix == 0 || iy == 0 || iz == 0)
-		onBoundary = true;
-	    }
-
-      
 	  double force = f.get(i);
-
-	  if(!onBoundary)
-	    f.set(i,2*force*x_[Jspecies].get(i));
-	  else f.set(i,0.0);	
+	  f.set(i,2*force*x_[Jspecies].get(i));
 	}
     }
   return F;
@@ -289,10 +257,7 @@ double fireMinimizer_Mu::step()
   return F_;
 }
 
-void fireMinimizer_Mu::draw_after()
-{
-  //  log_ << "After FIRE step " << step_counter_ << " F = " << F_ << " N = " << dft_.getNumberAtoms(0) << " calls = " << calls_ << " dt_ = " << dt_ << " alpha = " << alpha_ << " f_alf_ = " << f_alf_ << endl;
-}
+void fireMinimizer_Mu::draw_after() {}
 
 int fireMinimizer_Mu::draw_during()
 {
@@ -313,22 +278,20 @@ double fireMinimizer2::step()
   if(onlyRelax_ >= 0) {begin_relax = onlyRelax_; end_relax = begin_relax+1;}
 
   // dF does not include the minus so we have to put it in by hand everywhere from here down:
-  double P = 0;  
+  Summation P;  
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
-    P += -v_[Jspecies].dotWith(dft_.getDF(Jspecies));
+    for(long i=0;i<v_[Jspecies].size();i++)
+      P += -v_[Jspecies].get(i) * dft_.getDF(Jspecies).get(i);
 
-  
-  cout << "P = " << P << " f-fold = " << F_-fold << endl;
   if(F_ - fold > 1e-10) P = -1;
   fold = F_;
 
-  
-  int numSpecies = dft_.getNumberOfSpecies();  
+  int numSpecies = end_relax-begin_relax;
   vector<DFT_Vec> x_rem(numSpecies);
   vector<DFT_Vec> v_rem(numSpecies);
   vector<DFT_Vec> dF_rem(numSpecies);
 
-  for(int Jspecies = 0; Jspecies < numSpecies; Jspecies++)
+  for(int Jspecies = begin_relax; Jspecies < end_relax; Jspecies++)
     {
       x_rem[Jspecies].set(x_[Jspecies]);
       v_rem[Jspecies].set(v_[Jspecies]);
@@ -363,25 +326,16 @@ double fireMinimizer2::step()
       }
 
     for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
-      {
-	//	x_[Jspecies].IncrementBy_Scaled_Vector(v_[Jspecies],-0.5*dt_);
-	//	x_[Jspecies].IncrementBy_Scaled_Vector(v_[Jspecies],-dt_);
-	//	for(long i = 0; i<x_[Jspecies].size(); i++) //here
-	//	  x_[Jspecies].set(i, x_[Jspecies].get(i) - v_[Jspecies].get(i)*dt_/max(1.0,fabs(x_[Jspecies].get(i))));
 	v_[Jspecies].zeros(v_[Jspecies].size());
-      }
-    cout << "backup" << endl;
   }
 
   // integration step
-  // Changed handling of backtracking 21/10/2019
-  
+  // Changed handling of backtracking 21/10/2019  
   try {
-    SemiImplicitEuler();
+    SemiImplicitEuler(begin_relax, end_relax);
   } catch(Eta_Too_Large_Exception &e) {
     for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
       {
-	//	    x_[Jspecies].IncrementBy_Scaled_Vector(v_[Jspecies],-0.5*dt_);
 	x_[Jspecies].set(x_rem[Jspecies]);
 	v_[Jspecies].set(v_rem[Jspecies]);
 	dft_.setDF(Jspecies,dF_rem[Jspecies]);
@@ -389,7 +343,9 @@ double fireMinimizer2::step()
     dt_ /= 10; // This was previously 2
   }
 
-  // write a snapshot  
+  // write a snapshot
+  static int ic = 0;
+  if(ic % 10 == 0)
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
     {
       stringstream s;
@@ -397,38 +353,22 @@ double fireMinimizer2::step()
       string of = s.str();
       dft_.writeDensity(Jspecies,of);
     }
-
-  cout << "dt = " << dt_ << " dt_max_ = " << dt_max_ << " alpha = " << alpha_ << " f_alf_ = " << f_alf_ << endl;
+  ic++;
+  
   return F_;
 }
 
-void fireMinimizer2::SemiImplicitEuler()
+void fireMinimizer2::SemiImplicitEuler(int begin_relax, int end_relax)
 {
-  int numSpecies = dft_.getNumberOfSpecies();
-  
-  int begin_relax = 0;
-  int end_relax   = numSpecies;
-
-  if(onlyRelax_ >= 0) {begin_relax = onlyRelax_; end_relax = begin_relax+1;}
-
   // update velocities and prepare for mixing
   // N.B.: df is a gradient, not a force
   double vnorm = 0.0;
-  double fnorm = 0.0;
+  double fnorm = 0.0;  
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
     {
       DFT_Vec &df = dft_.getDF(Jspecies);
 
       v_[Jspecies].IncrementBy_Scaled_Vector(df, -dt_);
-      /*
-      for(long i = 0; i<x_[Jspecies].size(); i++)
-      	{
-	  double vi = v_[Jspecies].get(i);
-	  double xi = x_[Jspecies].get(i);
-	  double fi = df.get(i);
-	  v_[Jspecies].set(i, vi - dt_*fi/max(1.0, fabs(xi)));
-	}
-      */
 	  
       double v = v_[Jspecies].euclidean_norm();
       double f = df.euclidean_norm();
@@ -443,35 +383,19 @@ void fireMinimizer2::SemiImplicitEuler()
       v_[Jspecies].MultBy(1-alpha_);      
       v_[Jspecies].IncrementBy_Scaled_Vector(dft_.getDF(Jspecies), -alpha_*sqrt(vnorm/fnorm));
     }
-
-  //Update x
-  //  for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)  
-  //    x_[Jspecies].IncrementBy_Scaled_Vector(v_[Jspecies],dt_);
-
-  long smax;
-  double fmax = 0;
   
+  //Update x
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
     for(long i = 0; i<x_[Jspecies].size(); i++)
-      {
-	x_[Jspecies].set(i, x_[Jspecies].get(i) + v_[Jspecies].get(i)*dt_/max(1.0,fabs(x_[Jspecies].get(i))));
-	//x_[Jspecies].set(i, x_[Jspecies].get(i) + v_[Jspecies].get(i)*dt_);
-      double ff = fabs(dft_.getDF(Jspecies).get(i));
-      if(ff > fmax) {fmax = ff; smax = i;}
-      }
-  cout << "smax = " << smax << " fmax = " << fmax << " density = " << dft_.getDensity(0).getDensity(smax) << endl;
-
+      x_[Jspecies].set(i, x_[Jspecies].get(i) + v_[Jspecies].get(i)*dt_/max(1.0,fabs(x_[Jspecies].get(i))));
     
   // recalculate forces with back-tracking, if necessary
   bool bSuccess = false;
-  //  while(!bSuccess)
-  //    {
-      try{  
-	F_ = getDF_DX();                          // then get new forces
-	bSuccess = true;
-      } catch (Eta_Too_Large_Exception &e) {
-	log_ << "Backtrack .. " << endl;
-	throw(e);
-      }
-      //    }
+  try{  
+    F_ = getDF_DX(); // get new forces
+    bSuccess = true;
+  } catch (Eta_Too_Large_Exception &e) {
+    log_ << "Backtrack .. " << endl;
+    throw(e);
+  }
 }
