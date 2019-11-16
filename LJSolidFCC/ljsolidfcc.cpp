@@ -25,6 +25,8 @@ using namespace std;
 #include "myColor.h"
 #include "SolidPhase.h"
 #include "SolidPhase.cpp"
+#include "../LJUniformFluid/UniformFluid.h"
+#include "../LJUniformFluid/UniformFluid.cpp"
 
 
 
@@ -51,20 +53,23 @@ int main(int argc, char** argv)
 	options.write(log);
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
 	
-	//////////////////////// Run DFT computations //////////////////////////
+	///////////////// Run DFT computations for the solid ///////////////////
 	
 	double aLattice = 0;
 	double densitySolid = 0;
 	double numParticlesInCell = 0;
 	double freeEnergySolid = 0;
-	bool success = false;
+	double aVdWSolid = 0;
+	double hsdSolid = 0;
+	bool successSolid = true;
 	
 	minOverNpoints(argc, argv, log, kT, mu, aLattice, densitySolid, 
-	               numParticlesInCell, freeEnergySolid, success);
+	               numParticlesInCell, freeEnergySolid, aVdWSolid, 
+	               hsdSolid, successSolid);
 	
-	// Report
+	// Print results in log file
 	
-	if (success)
+	if (successSolid)
 	{
 		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 		log << "Lattice Constant = " << aLattice << endl;
@@ -75,7 +80,31 @@ int main(int argc, char** argv)
 	else
 	{
 		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
-		log << "ERROR: Minimisation FAILED = " << endl;
+		log << "ERROR: Minimisation Npoints FAILED" << endl;
+	}
+	
+	///////////////// Run DFT computations for the fluid ///////////////////
+	
+	// TODO: use bisection method?? 
+	//       current problem if we are in vapor phase and start in the liquid
+	
+	bool successFluid = true;
+	
+	double densityFluid = findRootdOmegadRho(1.5, kT, mu, aVdWSolid, hsdSolid, successFluid);
+	double freeEnergyFluid = uniformFluidOmega(kT, mu, aVdWSolid, hsdSolid, densityFluid);
+	
+	// Print results in log file
+	
+	if (successFluid)
+	{
+		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "Fluid Density = " <<densityFluid << endl;
+		log << "Fluid Free Energy = " << freeEnergyFluid << endl;
+	}
+	else
+	{
+		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: Fluid computation FAILED" << endl;
 	}
 	
 	return 1;

@@ -7,7 +7,8 @@ project(LJSolidFCC)
 set(PATH_TO_DFT_LIB ${PROJECT_SOURCE_DIR}/../Lib)
 
 # MODIFY: this is the app file
-add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp)
+#add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp)
+ add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/dftComputations.cpp)
 
 #MODIFY: enable these lines if you want to use Grace (Grace.h, Grace.cpp)
 #set(USE_GRACE true)
@@ -16,7 +17,7 @@ add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp)
 set(USE_MGL true)
 
 #MODIFY: enable these lines if you want to restrict the DFT computations to a gaussian profile
-#set(RESTRICT_GAUSSIAN_PROFILE true)
+set(RESTRICT_GAUSSIAN_PROFILE true)
 
 #MODIFY: enable these lines if you want to skip the pre-run to optimise the initial condition 
 #set(NO_GAUSSIAN_PRE_RUN true)
@@ -74,4 +75,3 @@ endif()
 if(NO_GAUSSIAN_PRE_RUN)
   target_compile_definitions(${PROJECT_NAME} PUBLIC NO_GAUSSIAN_PRE_RUN)
 endif()
-

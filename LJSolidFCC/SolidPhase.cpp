@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <vector>
 #include <time.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -36,10 +37,10 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////
 
 
-void minOverNpoints( int argc, char** argv, Log &log,  double kT, double mu, 
+void minOverNpoints( int argc, char** argv, Log &log, double kT, double mu, 
                      double &aLattice_min, double &density_min, 
                      double &numParticles_min, double &freeEnergy_min,
-                     bool &success)
+                     double &aVdW, double &hsd, bool &success )
 {
 	////////////////////////////// Parameters //////////////////////////////
 	
@@ -96,13 +97,17 @@ void minOverNpoints( int argc, char** argv, Log &log,  double kT, double mu,
 		double numParticles_final;
 		double freeEnergy_final;
 
-		DFTcomputation( argc, argv, log, kT, mu, Npoints[i], true, density_final,
-		                numParticles_final, freeEnergy_final, success_final);
+		DFTcomputation( argc, argv, log, kT, mu, Npoints[i], density_final,
+		                numParticles_final, freeEnergy_final, 
+		                aVdW, hsd, success_final);
 
 		successPerNpoint[i] = success_final;
 		density[i] = density_final;
 		numParticles[i] = numParticles_final;
 		freeEnergy[i] = freeEnergy_final;
+		
+		// clean weights
+		int sysresult = system("rm weights*");
 	}
 	
 	// Report
@@ -158,7 +163,7 @@ void minOverNpoints( int argc, char** argv, Log &log,  double kT, double mu,
 	// select a few points in the vicinity of the min data point
 	
 	vector<int> indicesToFit;
-	for (int i=-2; i<3; i++)
+	for (int i=-1; i<2; i++)
 	{
 		if (index_min+i>=0 && index_min+i<NumLatticeSizes && successPerNpoint[index_min+i])
 			indicesToFit.push_back(index_min+i);
@@ -223,16 +228,17 @@ void minOverNpoints( int argc, char** argv, Log &log,  double kT, double mu,
 
 // This function is just an intermediate to catch EtaTooLarge exceptions
 
-void DFTcomputation( int argc, char** argv, Log &log, double kT, double mu, 
-                     int Npoints, bool runMinimizer,
+void DFTcomputation( int argc, char** argv, Log &log, 
+                     double kT, double mu, int Npoints, 
                      double &density_final, double &numParticles_final,
-                     double &freeEnergy_final, bool &success            )
+                     double &freeEnergy_final, double &aVdW, double &hsd, 
+                     bool &success )
 {
 	try
 	{
-		DFTcomputation2( argc, argv, log, kT, mu, Npoints, runMinimizer,
-		                 density_final, numParticles_final, freeEnergy_final,
-		                 success);
+		DFTcomputation2( argc, argv, log, kT, mu, Npoints, density_final,
+		                 numParticles_final, freeEnergy_final, 
+		                 aVdW, hsd, success);
 	}
 	catch( Eta_Too_Large_Exception &e)
 	{
@@ -252,10 +258,11 @@ void DFTcomputation( int argc, char** argv, Log &log, double kT, double mu,
 
 // Remark: the free energy is given per unit volume
 
-void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu, 
-                      int Npoints, bool runMinimizer,
+void DFTcomputation2( int argc, char** argv, Log &log, 
+                      double kT, double mu, int Npoints,
                       double &density_final, double &numParticles_final,
-                      double &freeEnergy_final, bool &success            )
+                      double &freeEnergy_final, double &aVdW, double &hsd, 
+                      bool &success )
 {
 	////////////////////////////  Parameters ///////////////////////////////
 
@@ -364,7 +371,7 @@ void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu,
 	////////////////////////////////////
 
 	success = true;
-
+	
 	int ncopy3= ncopy*ncopy*ncopy;
 
 	double Natoms  = 4*(1-Nvac)*ncopy3;
@@ -395,6 +402,7 @@ void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu,
 	LJ potential1(sigma1, eps1, rcut1);
 
 	if(hsd1 < 0) hsd1 = potential1.getHSD(kT);
+	hsd = hsd1;
 
 	/////////////////////////////////////
 	// Create density objects
@@ -411,7 +419,8 @@ void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu,
 
 	FMT_Species species1(theDensity1,hsd1,pointsFile);
 
-	Interaction i1(species1,species1,potential1,kT,log);
+	Interaction i1(species1,species1,potential1,kT,log,pointsFile);
+	aVdW = i1.getVDWParameter();
 
 	/////////////////////////////////////
 	// Create the hard-sphere object
@@ -621,7 +630,7 @@ void DFTcomputation2( int argc, char** argv, Log &log, double kT, double mu,
 
 	////////////////////////////  Final Results ////////////////////////////
 
-#ifndef NO_GAUSSIAN_PRE_RUN
+#ifdef RESTRICT_GAUSSIAN_PROFILE
 	
 	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 	log << "Final Omega/V: " << freeEnergy_min << endl;

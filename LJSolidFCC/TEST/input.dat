@@ -16,7 +16,13 @@ Dx = 0.0125
 ######## Thermodynamics #######
 
 kT = 1.0
-Mu = -1
+kTMin = 1.0
+kTMax = 1.5
+kTStep = 0.5
+Mu = -3
+MuMin = 0
+MuMax = 10
+MuStep = 3
 
 ######## Potential #######
 
@@ -29,7 +35,7 @@ rcut1 = 3
 ncopy = 1
 prefac = 0.9999
 Nvac = 0.0025;
-GaussianAlpha = 300
+GaussianAlpha = 400
 GaussianAlphaMin = 50
 GaussianAlphaMax = 5000
 GaussianAlphaLogStep = 0.3
@@ -39,5 +45,5 @@ GaussianAlphaLogStep = 0.3
 TimeStepMax = 10
 AlphaStart = 0.01
 AlphaFac = 0.99
-#MaxSteps = 2000
-ForceTerminationCriterion = 1.0
+MaxSteps = 2000
+ForceTerminationCriterion = 1e-4
