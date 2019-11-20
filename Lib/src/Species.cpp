@@ -19,7 +19,7 @@ using namespace std;
 
 int Species::SequenceNumber_ = 0;
 
-FMT_Species::FMT_Species(Density& density, double hsd, string &pointsFile): Species(density), hsd_(hsd), d_(11)
+FMT_Species::FMT_Species(Density& density, double hsd, string &pointsFile, double mu, int seq): Species(density,mu,seq), hsd_(hsd), d_(11)
 {
   long Nx = density_.Nx();
   long Ny = density_.Ny();
@@ -29,7 +29,14 @@ FMT_Species::FMT_Species(Density& density, double hsd, string &pointsFile): Spec
     d.initialize(Nx, Ny, Nz);
 
   stringstream ss1;
-  ss1 << "weights_" << seq_num_ << ".dat";
+  //  ss1 << "weights_" << seq_num_ << ".dat";
+  ss1 << "weights_"
+      << Nx << "_"
+      << Ny << "_"
+      << Nz << "_"
+      << hsd_ << "_"
+      << density_.getDX() << "_"
+      << ".dat";
   
   bool readWeights = true;
   
@@ -42,8 +49,8 @@ FMT_Species::FMT_Species(Density& density, double hsd, string &pointsFile): Spec
 
     stringstream ss2(buf);
     int nx, ny, nz;
-    double d;
-    ss2 >> nx >> ny >> nz >> d;
+    double d, dx;
+    ss2 >> nx >> ny >> nz >> d >> dx;
 
     if(nx != Nx)
       {readWeights = false; cout << "\n" <<  "Mismatch in Nx: expected " << Nx << " but read " << nx <<  endl;}
@@ -53,6 +60,8 @@ FMT_Species::FMT_Species(Density& density, double hsd, string &pointsFile): Spec
       {readWeights = false; cout << "\n" <<  "Mismatch in Nz: expected " << Nz << " but read " << nz <<  endl;}
     if(fabs(hsd_-d) > 1e-8*(hsd_+d))
       {readWeights = false; cout << "\n" <<  "Mismatch in hsd: generating weights: expected " << hsd_ << " but read " << d << endl;}
+    if(fabs(density_.getDX()-dx) > 1e-8*(density_.getDX()+dx))
+      {readWeights = false; cout << "\n" <<  "Mismatch in Dx: generating weights: expected " << density_.getDX() << " but read " << dx << endl;}
 
     getline(in,buf);
     stringstream ss3(buf);
@@ -70,6 +79,21 @@ FMT_Species::FMT_Species(Density& density, double hsd, string &pointsFile): Spec
 
   for(FMT_Weighted_Density &d: d_)
     d.transformWeights();
+}
+
+void FMT_Species::reset(string& pointsFile)
+{
+  long Nx = density_.Nx();
+  long Ny = density_.Ny();
+  long Nz = density_.Nz();
+
+  for(FMT_Weighted_Density &d: d_)
+    d.initialize(Nx, Ny, Nz);
+
+  generateWeights(pointsFile);
+
+  for(FMT_Weighted_Density &d: d_)
+    d.transformWeights();  
 }
 
 // The idea here is as follows. Consider the s weighted density which is just an integral over a sphere of radius hsd/2.
@@ -387,17 +411,22 @@ void FMT_Species::generateWeights(string &pointsFile)
   
   /// Dump the weights
   stringstream ss;
-  ss << "weights_" << seq_num_ << ".dat";
+  //  ss << "weights_" << seq_num_ << ".dat";
+  ss << "weights_"
+      << Nx << "_"
+      << Ny << "_"
+      << Nz << "_"
+      << hsd_ << "_"
+      << density_.getDX() << "_"
+      << ".dat";
+  
   ofstream of(ss.str().c_str(), ios::binary);
 
   of.flags (std::ios::scientific);
   of.precision (std::numeric_limits<double>::digits10 + 1);
 
-  of << Nx << " " << Ny << " " << Nz << " " << hsd_ << endl;
+  of << Nx << " " << Ny << " " << Nz << " " << hsd_ << " " << density_.getDX() << endl;
   of << pointsFile << endl;
-
-  cout << "Writing: " << Ny << " " << Nz << " " << hsd_ << endl;
-  cout << "Writing: " << pointsFile << endl;
   
   for(auto& s: d_)
     s.dump(of);  

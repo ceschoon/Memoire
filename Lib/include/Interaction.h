@@ -115,7 +115,16 @@ class Interaction
     // First, try to read the weights from a file
     
     stringstream ss1;
-    ss1 << "weights_" << s1_.getSequenceNumber() << "_" << s2_.getSequenceNumber() << ".dat";
+    //    ss1 << "weights_" << s1_.getSequenceNumber() << "_" << s2_.getSequenceNumber() << ".dat";
+    ss1 << "weights_"
+	<< s1_.getSequenceNumber() << "_"
+	<< s2_.getSequenceNumber() << "_"
+	<< Nx << "_"
+	<< Ny << "_"
+	<< Nz << "_"
+	<< kT << "_"
+	<< v.getIdentifier() << "_"
+	<< ".dat";    
   
     bool readWeights = true;
     
@@ -128,8 +137,9 @@ class Interaction
 
       stringstream ss2(buf);
       int nx, ny, nz;
-      double Rc;
-      ss2 >> nx >> ny >> nz >> Rc;
+      double temp;
+      double dx;
+      ss2 >> nx >> ny >> nz >> temp >> dx;
 
       if(nx != Nx)
 	{readWeights = false; cout << "\n" <<  "Mismatch in Nx: expected " << Nx << " but read " << nx <<  endl;}
@@ -137,8 +147,19 @@ class Interaction
 	{readWeights = false; cout << "\n" <<  "Mismatch in Ny: expected " << Ny << " but read " << ny <<  endl;}
       if(nz != Nz)
 	{readWeights = false; cout << "\n" <<  "Mismatch in Nz: expected " << Nz << " but read " << nz <<  endl;}
-      if(fabs(v.getRcut()-Rc) > 1e-8*(v.getRcut()+Rc))
-	{readWeights = false; cout << "\n" <<  "Mismatch in cutoff: generating weights: expected " << v.getRcut() << " but read " << Rc << endl;}
+      if(fabs(temp - kT) > 1e-8*fabs(temp+kT))
+	{readWeights = false; cout << "\n" <<  "Mismatch in kT: expected " << kT << " but read " << temp <<  endl;}
+      if(fabs(density.getDX()-dx) > 1e-8*(density.getDX()+dx))
+	{readWeights = false; cout << "\n" <<  "Mismatch in Dx: generating weights: expected " << density.getDX() << " but read " << dx << endl;}      
+
+      getline(in,buf);
+      stringstream ss4(buf);      
+      string identifier;
+      ss4 >> identifier;
+      string pot = v.getIdentifier();
+      if(identifier.compare(pot) != 0)
+	{readWeights = false; cout << "\n" <<  "Mismatch in potential: expected " << pot << " but read " << identifier <<  endl;}
+      
 
       getline(in,buf);
       stringstream ss3(buf);
@@ -157,6 +178,31 @@ class Interaction
     w_att_.do_real_2_fourier();     
   }    
 
+
+  void reset(Potential1 &v, double kT, Log &log, string &pointsFile)
+  {
+    const Density &density = s1_.getDensity();
+    long Nx = density.Nx();
+    long Ny = density.Ny();
+    long Nz = density.Nz();
+    
+    w_att_.initialize(Nx,Ny,Nz);      
+    a_vdw_ = 0.0;
+
+    stringstream ss1;
+    //    ss1 << "weights_" << s1_.getSequenceNumber() << "_" << s2_.getSequenceNumber() << ".dat";
+    ss1 << "weights_"
+	<< s1_.getSequenceNumber() << "_"
+	<< s2_.getSequenceNumber() << "_"
+	<< Nx << "_"
+	<< Ny << "_"
+	<< Nz << "_"
+	<< kT << "_"      
+	<< ".dat";        
+    
+    generateWeights(pointsFile,v, ss1, log, kT);
+    w_att_.do_real_2_fourier();           
+  }
 
 
   void generateWeights(string &pointsFile, Potential1 &v, stringstream &ss, Log& log, double kT)
@@ -369,11 +415,9 @@ class Interaction
     of.flags (std::ios::scientific);
     of.precision (std::numeric_limits<double>::digits10 + 1);
 
-    of << Nx << " " << Ny << " " << Nz << " " << Rc << endl;
+    of << Nx << " " << Ny << " " << Nz << " " << kT << " " << density.getDX() << endl;
+    of << v.getIdentifier() << endl;
     of << pointsFile << endl;
-
-    cout << "Writing: " << Ny << " " << Nz << " " << Rc << endl;
-    cout << "Writing: " << pointsFile << endl;
 
     w_att_.Real().save(of);
   }
@@ -484,7 +528,7 @@ class Interaction
 
   double Fhelmholtz(const vector<double> &x) const
   {
-    return a_vdw_*x[s1_.getSequenceNumber()]*x[s2_.getSequenceNumber()];
+    return 0.5*a_vdw_*x[s1_.getSequenceNumber()]*x[s2_.getSequenceNumber()];
   }  
 
   double getVDWParameter() const { return a_vdw_;}

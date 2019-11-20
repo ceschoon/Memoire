@@ -51,7 +51,9 @@ class VDW1
   int findCoexistence(double &x1, double &x2) const;
 
   double findLiquidFromMu(double mu, double mu_coex, double xliq_coex) const ;
-
+  double findLiquidFromMu(double mu, double high_density) const ;
+  double findVaporFromMu(double betamu, double maxDensity) const;
+  
   void spinodal(double &x1, double &x2) const;
   
   void set_VDW_Parameter(double a) { a_ = a;}

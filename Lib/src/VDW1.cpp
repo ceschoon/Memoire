@@ -4,6 +4,8 @@
 #include <fstream>
 #include <complex>
 #include <stdexcept>
+#include <utility>
+#include <algorithm>
 
 using namespace std;
 
@@ -29,15 +31,13 @@ double VDW1::findDensityFromPressure(double P, double xmin, double xmax) const
   int ret =   gsl_poly_complex_solve(a, 6, w, z);
   gsl_poly_complex_workspace_free(w);
 
-  if(ret != GSL_SUCCESS) throw std::runtime_error("Determination of spinodal failed 1");
+  if(ret != GSL_SUCCESS) {cout << " P = " << P << endl; throw std::runtime_error("findDensityFromPressure poly solver failed");}
 
   double x = -1;
   double xi = 1e30;
 
   for (int i = 0; i < 5; i++)
     {
-      //      cout << "findDensity " << i << " " << z[2*i]*6/(M_PI*d_*d_*d_) << " " <<  z[2*i+1] << " " << x << " " << xi << endl;
-
       double re = z[2*i];
       double im = abs(z[2*i+1]);
 
@@ -78,7 +78,7 @@ int VDW1::findCoexistence(double &x1, double &x2) const
   double Ps2 = pressure(xs2);
   
   // Density of liquid with zero pressure
-  double xliq0 = findDensityFromPressure(0.0,xs2,2);
+  //  double xliq0 = findDensityFromPressure(0.0,xs2,2);
 
   // Density of liquid with  pressure Ps1
   double xliq1 = findDensityFromPressure(Ps1,xs2,2);
@@ -179,4 +179,72 @@ double VDW1::findLiquidFromMu(double mu, double mu_coex, double xliq_coex) const
     else { ax = densityLiq; fa = fc;}
   } while(fabs(fa-fb) > 1e-6*fabs(SuperSaturation));
   return densityLiq;
+}
+
+
+double VDW1::findLiquidFromMu(double mu, double high_density) const
+{
+  // Find the liquid that has the correct chemical potential,
+  // We know it is between densityLiqCoex and infinity
+  double ax = high_density;
+  double bx = ax;
+  double fa = chemPotential(ax);
+  double fb = 0.0;
+        
+  do {
+    bx = ax; fb = fa;
+    ax -= 0.01;
+    fa = chemPotential(ax);
+  } while((fa-mu)*(fb-mu) > 0);
+
+  double cx;
+  do {
+    cx = (ax+bx)/2;
+    double fc = chemPotential(cx);
+
+    if(fa > mu)
+      {
+	if(fc > mu) { fa = fc; ax = cx;}
+	else {fb = fc; bx = cx;}
+      } else {
+      	if(fc > mu) { fb = fc; bx = cx;}
+	else {fa = fc; ax = cx;}
+    }
+  } while(fabs(fa-fb) > 1e-6);
+  return cx;
+}
+
+double VDW1::findVaporFromMu(double betamu, double maxDensity) const
+{
+  // first, find a lower bound:
+  // this is a guess for ideal gas
+  double x1 = exp(betamu)/2;
+  while(chemPotential(x1) > betamu) x1 /= 2;
+
+  // now we need an upper bound: is there a spinodal?
+  double xs1 = -1;
+  double xs2 = -1;
+  double x2  = -1;
+  try {
+    spinodal(xs1,xs2);
+    x2 = min(xs1,xs2);
+  } catch(...) {
+    // no problem - there is no spinodal.
+    x2 = maxDensity;
+  }
+
+  if(chemPotential(x2) < betamu) return -1;
+
+  // do bisection
+  double f1 = chemPotential(x1);
+  double f2 = chemPotential(x2);
+
+  while(fabs(x1-x2) > 1e-8)
+    {
+      double x = (x1+x2)/2;
+      double f = chemPotential(x);
+      if(f > betamu) x2 = x;
+      else x1 = x;
+    }
+  return (x1+x2)/2;  
 }

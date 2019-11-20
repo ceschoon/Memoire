@@ -75,7 +75,7 @@ void Minimizer::run(long maxSteps)
       }
     if(maxSteps > 0 && step_counter_ == maxSteps)
       {
-	log_ << "maxSteps reached ... normal exit" << endl;
+	log_ << "maxSteps = " << maxSteps << " reached ... normal exit" << endl;
 	break;
       }
   } while(1);
@@ -280,8 +280,7 @@ double fireMinimizer2::step()
   // dF does not include the minus so we have to put it in by hand everywhere from here down:
   Summation P;  
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
-    for(long i=0;i<v_[Jspecies].size();i++)
-      P += -v_[Jspecies].get(i) * dft_.getDF(Jspecies).get(i);
+    P += -v_[Jspecies].dotWith(dft_.getDF(Jspecies));
 
   if(F_ - fold > 1e-10) P = -1;
   fold = F_;
@@ -363,11 +362,12 @@ void fireMinimizer2::SemiImplicitEuler(int begin_relax, int end_relax)
   // update velocities and prepare for mixing
   // N.B.: df is a gradient, not a force
   double vnorm = 0.0;
-  double fnorm = 0.0;  
+  double fnorm = 0.0;
+  long   count = 0;
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
     {
       DFT_Vec &df = dft_.getDF(Jspecies);
-
+      count += df.size();
       v_[Jspecies].IncrementBy_Scaled_Vector(df, -dt_);
 	  
       double v = v_[Jspecies].euclidean_norm();
@@ -376,7 +376,8 @@ void fireMinimizer2::SemiImplicitEuler(int begin_relax, int end_relax)
       vnorm += v*v;
       fnorm += f*f;
     }
-
+  rms_force_ = sqrt(fnorm/count);
+  
   /// Do mixing
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
     {
@@ -386,9 +387,18 @@ void fireMinimizer2::SemiImplicitEuler(int begin_relax, int end_relax)
   
   //Update x
   for(int Jspecies = begin_relax; Jspecies<end_relax; Jspecies++)
-    for(long i = 0; i<x_[Jspecies].size(); i++)
-      x_[Jspecies].set(i, x_[Jspecies].get(i) + v_[Jspecies].get(i)*dt_/max(1.0,fabs(x_[Jspecies].get(i))));
-    
+    {
+      long Ntot = x_[Jspecies].size();
+      int chunk = Ntot/20;
+      long i;
+#pragma omp parallel for		       \
+            shared( chunk, Jspecies, v_)	\
+            private(i)				\
+            schedule(static,chunk)				
+	for(i = 0; i<Ntot; i++)
+	  x_[Jspecies].set(i, x_[Jspecies].get(i) + v_[Jspecies].get(i)*dt_/max(fudge_,fabs(x_[Jspecies].get(i)))); // This weighting reduces backtracking ...
+    }
+  
   // recalculate forces with back-tracking, if necessary
   bool bSuccess = false;
   try{  
