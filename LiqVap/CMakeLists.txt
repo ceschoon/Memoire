@@ -1,14 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 
 # MODIFY: Project name: used to name the executable 
-project(LJSolidFCC)
+project(EOS)
 
 # MODIFY: This needs to point to the Lib directory
 set(PATH_TO_DFT_LIB ${PROJECT_SOURCE_DIR}/../Lib)
 
 # MODIFY: this is the app file 
-add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/ljsolidfcc.cpp ../Lib/src/VDW1.cpp)
-add_executable(LIQVAP  ${PROJECT_SOURCE_DIR}/LiquidVapor.cpp ../Lib/src/VDW1.cpp)
+add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/EOS.cpp ../Lib/src/VDW1.cpp)
 
 #MODIFY: enable these lines if you want to use Grace (Grace.h, Grace.cpp)
 set(USE_GRACE true)
@@ -22,7 +21,6 @@ set(USE_GRACE true)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 set(CMAKE_CXX_EXTENSIONS ON)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
-target_compile_features(LIQVAP PUBLIC cxx_std_11)
 
 ## Find other packages needed
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/../scripts)
@@ -30,7 +28,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/../scripts)
 find_package(GSL REQUIRED)
 find_package(OpenMP)
 find_package(Armadillo  REQUIRED)
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 if(OpenMP_CXX_FOUND)
   target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OMP)
@@ -48,16 +45,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   "armadillo"
   "fftw3_omp"
   "fftw3"
-  Eigen3::Eigen  
-  )
-
-target_link_libraries(LIQVAP PUBLIC
-  ${CLASSICALDFT}
-  "gsl"
-  "gslcblas"
-  "armadillo"
-  "fftw3_omp"
-  "fftw3"
+  "nlopt"  
   )
 
 

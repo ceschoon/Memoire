@@ -47,6 +47,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   "armadillo"
   "fftw3_omp"
   "fftw3"
+  "nlopt"  
   )
 
 target_link_libraries(LIQVAP PUBLIC
@@ -71,4 +72,9 @@ if(USE_GRACE)
   target_sources(${PROJECT_NAME} PUBLIC ${PATH_TO_DFT_LIB}/additionalCode/Grace.cpp)
   target_include_directories(${PROJECT_NAME} PUBLIC ${PATH_TO_DFT_LIB}/additionalCode)
   target_link_libraries(${PROJECT_NAME} PUBLIC "grace_np")
+
+  target_compile_definitions(LIQVAP PUBLIC USE_GRACE)
+  target_sources(LIQVAP PUBLIC ${PATH_TO_DFT_LIB}/additionalCode/Grace.cpp)
+  target_include_directories(LIQVAP PUBLIC ${PATH_TO_DFT_LIB}/additionalCode)
+  target_link_libraries(LIQVAP PUBLIC "grace_np")  
 endif()

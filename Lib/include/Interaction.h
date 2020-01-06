@@ -79,12 +79,9 @@ class Interaction
 
 		long pos = nz+Nz*(ny+Ny*nx);
 
-		double r2 = x*x+y*y+z*z;
-		double w = v.Watt(sqrt(r2))/kT;
-		//		double w = -exp(-v.V(sqrt(r2))/kT);
-		//		if(r2 > 1.03*1.03) w += 1; 
-
-		w *= dx*dy*dz;
+		double r = sqrt(x*x+y*y+z*z);
+		double w = v.Watt(r)/kT;
+		w*= dx*dy*dz;
 		
 		a_vdw_ += w;
 		w_att_.Real().IncrementBy(pos,w);
@@ -115,31 +112,32 @@ class Interaction
     // First, try to read the weights from a file
     
     stringstream ss1;
-    //    ss1 << "weights_" << s1_.getSequenceNumber() << "_" << s2_.getSequenceNumber() << ".dat";
     ss1 << "weights_"
 	<< s1_.getSequenceNumber() << "_"
 	<< s2_.getSequenceNumber() << "_"
 	<< Nx << "_"
 	<< Ny << "_"
 	<< Nz << "_"
-	<< kT << "_"
-	<< v.getIdentifier() << "_"
-	<< ".dat";    
+	<< v.getIdentifier() << "_";
+    ss1 << ".dat";    
   
     bool readWeights = true;
     
     ifstream in(ss1.str().c_str(), ios::binary);
     if(!in.good())
-      {readWeights = false;     cout << myColor::GREEN  << "\n" <<  "Could not open file with potential kernal: it will be generated" << myColor::RESET << endl;}
-    else {
+      {
+	readWeights = false;
+	cout << myColor::GREEN << endl;
+	cout << "///////////////////////////////////////////////////////////" << endl;
+	cout << myColor::GREEN  << "\n" <<  "Could not open file with potential kernal: it will be generated" << myColor::RESET << endl;
+      } else {
       string buf;
       getline(in,buf);
 
       stringstream ss2(buf);
       int nx, ny, nz;
-      double temp;
       double dx;
-      ss2 >> nx >> ny >> nz >> temp >> dx;
+      ss2 >> nx >> ny >> nz >> dx;
 
       if(nx != Nx)
 	{readWeights = false; cout << "\n" <<  "Mismatch in Nx: expected " << Nx << " but read " << nx <<  endl;}
@@ -147,8 +145,6 @@ class Interaction
 	{readWeights = false; cout << "\n" <<  "Mismatch in Ny: expected " << Ny << " but read " << ny <<  endl;}
       if(nz != Nz)
 	{readWeights = false; cout << "\n" <<  "Mismatch in Nz: expected " << Nz << " but read " << nz <<  endl;}
-      if(fabs(temp - kT) > 1e-8*fabs(temp+kT))
-	{readWeights = false; cout << "\n" <<  "Mismatch in kT: expected " << kT << " but read " << temp <<  endl;}
       if(fabs(density.getDX()-dx) > 1e-8*(density.getDX()+dx))
 	{readWeights = false; cout << "\n" <<  "Mismatch in Dx: generating weights: expected " << density.getDX() << " but read " << dx << endl;}      
 
@@ -172,42 +168,19 @@ class Interaction
 	w_att_.Real().load(in);
 	a_vdw_ = w_att_.Real().accu();	
       } else {
-      generateWeights(pointsFile,v, ss1, log, kT);
+      generateWeights(pointsFile,v, ss1, log);
     }
+    // Introduce the temperature
+    w_att_.Real().MultBy(1.0/kT);
+    a_vdw_ /= kT;
+    
     // Now generate the FFT of the field  
     w_att_.do_real_2_fourier();     
   }    
 
 
-  void reset(Potential1 &v, double kT, Log &log, string &pointsFile)
-  {
-    const Density &density = s1_.getDensity();
-    long Nx = density.Nx();
-    long Ny = density.Ny();
-    long Nz = density.Nz();
-    
-    w_att_.initialize(Nx,Ny,Nz);      
-    a_vdw_ = 0.0;
-
-    stringstream ss1;
-    //    ss1 << "weights_" << s1_.getSequenceNumber() << "_" << s2_.getSequenceNumber() << ".dat";
-    ss1 << "weights_"
-	<< s1_.getSequenceNumber() << "_"
-	<< s2_.getSequenceNumber() << "_"
-	<< Nx << "_"
-	<< Ny << "_"
-	<< Nz << "_"
-	<< kT << "_"      
-	<< ".dat";        
-    
-    generateWeights(pointsFile,v, ss1, log, kT);
-    w_att_.do_real_2_fourier();           
-  }
-
-
-  void generateWeights(string &pointsFile, Potential1 &v, stringstream &ss, Log& log, double kT)
+  void generateWeights(string &pointsFile, Potential1 &v, stringstream &ss, Log& log)
   {    
-    log << "Calculating mean field potential ... " << endl;
     const Density &density = s1_.getDensity();
       
     // The lattice
@@ -306,12 +279,6 @@ class Interaction
     // Add up the weights for each point.
     // We throw in all permutations (iperm loop) of the integration points and all reflections (is loop)
     // to establish as much symmetry as possible. Probably unnecessary.    
-    cout << endl;
-    cout << myColor::GREEN;
-    cout << "///////////////////////////////////////////////////////////" << endl;
-    cout << "/////  Generating integration points for sphere volume " << endl;
-    cout << myColor::RESET << endl;
-
     // Get some Gauss-Lagrange integration points and weights for the radial integral
     int Nr = 128*4;
     gsl_integration_glfixed_table *tr = gsl_integration_glfixed_table_alloc(Nr);
@@ -346,7 +313,7 @@ class Interaction
 	      
 		    gsl_integration_glfixed_point(0, Rc, k, &r, &wr, tr);
 		  
-		    double watt = v.Watt(r)/kT; 
+		    double watt = v.Watt(r); 
 		  
 		    double x = r*points[pos][0];
 		    double y = r*points[pos][1];
@@ -415,7 +382,7 @@ class Interaction
     of.flags (std::ios::scientific);
     of.precision (std::numeric_limits<double>::digits10 + 1);
 
-    of << Nx << " " << Ny << " " << Nz << " " << kT << " " << density.getDX() << endl;
+    of << Nx << " " << Ny << " " << Nz << " " << density.getDX() << endl;
     of << v.getIdentifier() << endl;
     of << pointsFile << endl;
 
@@ -541,5 +508,6 @@ class Interaction
   DFT_FFT w_att_;  
 
 };
+
 
 #endif // __LUTSKO__INTERACTION__
