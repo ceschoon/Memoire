@@ -259,12 +259,16 @@ class WHDF : public Potential1
  protected:
   virtual double vr(double r) const
   {
+    if (r>rcut_) return 0;
+    
     double y = sigma_/r;
     double z = rcut_/r;
     return eps_*(y*y-1)*(z*z-1)*(z*z-1);
   }
   virtual double vr2(double r2) const
   {
+    if (r2>rcut_*rcut_) return 0;
+    
     double y2 = sigma_*sigma_/r2;
     double z2 = rcut_*rcut_/r2;
     return eps_*(y2-1)*(z2-1)*(z2-1);
