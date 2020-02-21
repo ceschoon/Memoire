@@ -1,6 +1,10 @@
 #ifndef __LUTSKO_POTENTIAL1__
 #define __LUTSKO_POTENTIAL1__
 
+#include<string>
+using std::string;
+using std::stringstream;
+
 #include "Integrator.h"
 
 /**
