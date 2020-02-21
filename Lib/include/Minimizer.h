@@ -65,7 +65,7 @@ class Minimizer
   ostream &log_;
 
   double vv_ = 0;
-    
+
 };
 
 /**
@@ -271,7 +271,7 @@ class fireMinimizer_Mu : public Minimizer
   *
   */
 
-class fireMinimizer2 : public Minimizer 
+class fireMinimizer2 : public Minimizer //fireMinimizer_Mu
 {
  public:
   fireMinimizer2(DFT &dft, ostream &log);
@@ -284,15 +284,13 @@ class fireMinimizer2 : public Minimizer
   void onlyRelaxSpecies(int j) { onlyRelax_ = j;}  
   
   virtual int  draw_during(){ log_ << "\t1D minimization F-mu*N = " << F_  << " N = " << dft_.getNumberAtoms(0) << endl;  return 1;}
-  //  virtual void draw_after() { cout << "dt_ = " << dt_ << endl;}
+  virtual void draw_after() { cout << "dt_ = " << dt_ << endl;}
 
   void setTimeStep(double dt)    { dt_ = dt;}
   void setTimeStepMax(double dt) { dt_max_ = dt;}  
   void setAlphaStart(double a)   { alpha_start_ = a;}
   void setAlphaFac(double a)     { f_alf_ = a;}
   void setBacktrackFac(double a) { f_back_ = a;}  
-
-  virtual double get_convergence_monitor() const { return fabs(vv_/dft_.lattice().getVolume());}
   
  protected:
   void SemiImplicitEuler(int begin, int end);
@@ -328,7 +326,6 @@ class fireMinimizer2 : public Minimizer
 
   double threshold_ = 0.0;
   double fmax_ = 0.0;
-
 };
 
 class adamMinimizer : public Minimizer
