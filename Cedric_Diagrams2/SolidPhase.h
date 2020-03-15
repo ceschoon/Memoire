@@ -63,6 +63,18 @@ int minOverCvacAlpha2D(double kT, double mu, int Ngrid,
                        double &Cvac_min, double &alpha_min);
 
 
+int minOverAlphaOnly(double kT, double mu, int Ngrid,
+                     int argc, char** argv, Log &log,
+                     double &freeEnergy_min, double &density_min,
+                     double &alpha_min);
+
+// generic function that points to the selected method for the minimisation
+int minOverCvacAlpha(double kT, double mu, int Ngrid,
+                     int argc, char** argv, Log &log,
+                     double &freeEnergy_min, double &density_min,
+                     double &Cvac_min, double &alpha_min);
+
+
 int DFTgaussian( int argc, char** argv, Log &log,
                  double kT, double mu, int Ngrid, double Cvac, double alpha,
                  double &freeEnergy, double &density);
@@ -279,7 +291,7 @@ int fixedkTMuSolid(
 								
 								double Cvac, alpha, freeEnergy, density;
 								int status_minOverCvacAlpha = 
-									minOverCvacAlpha2D(kT, mu, Ngrid_candidate,
+									minOverCvacAlpha(kT, mu, Ngrid_candidate,
 									argc, argv, log, freeEnergy, density, Cvac, alpha);
 								
 								if (status_minOverCvacAlpha==0) // success
@@ -355,7 +367,7 @@ int fixedkTMuSolid(
 			if (trialsCounter>Ngrid_maxNumTrials) break;
 			
 			double Cvac, alpha, freeEnergy, density;
-			int status_minOverCvacAlpha = minOverCvacAlpha2D(
+			int status_minOverCvacAlpha = minOverCvacAlpha(
 				kT, mu, Ngrid, argc, argv, log, freeEnergy, density, 
 				Cvac, alpha);
 			
@@ -403,7 +415,7 @@ int fixedkTMuSolid(
 	log << "Trying Ngrid=" << resPlus.Ngrid << endl;
 	
 	double CvacPlus, alphaPlus, freeEnergyPlus, densityPlus;
-	int status_Plus = minOverCvacAlpha2D(
+	int status_Plus = minOverCvacAlpha(
 		kT, mu, resPlus.Ngrid, argc, argv, log, freeEnergyPlus, densityPlus, 
 		CvacPlus, alphaPlus);
 	
@@ -427,7 +439,7 @@ int fixedkTMuSolid(
 	log << "Trying Ngrid=" << resMinus.Ngrid << endl;
 	
 	double CvacMinus, alphaMinus, freeEnergyMinus, densityMinus;
-	int status_Minus = minOverCvacAlpha2D(
+	int status_Minus = minOverCvacAlpha(
 		kT, mu, resMinus.Ngrid, argc, argv, log, freeEnergyMinus, 
 		densityMinus, CvacMinus, alphaMinus);
 	
@@ -446,17 +458,20 @@ int fixedkTMuSolid(
 			Ngrid_intMin = resMinus.Ngrid; // update current best Min
 	}
 	
-	// check if not already at minimum
+	// check if not already at the minimum
 	if (freeEnergyPlus  > lastRes.freeEnergy && 
-	    freeEnergyMinus > lastRes.freeEnergy)
+	    freeEnergyMinus > lastRes.freeEnergy &&
+	    status_Plus ==0 && status_Minus == 0)
 	{
+		log << "Already at the minimum (Ngrid)" << endl;
 		foundMin = true;
 		Ngrid_intMin = lastRes.Ngrid; // update current best Min
 	}
 	
 	// if not at the minimum, continue to search in the min direction
 	int NgridStep = Ngrid_rangeStep;
-	if (freeEnergyMinus<freeEnergyPlus) NgridStep *= -1;
+	if (freeEnergyMinus<lastRes.freeEnergy && status_Minus==0) 
+		NgridStep *= -1;
 	
 	while (!foundMin)
 	{
@@ -473,7 +488,7 @@ int fixedkTMuSolid(
 			break;
 		
 		double CvacNew, alphaNew, freeEnergyNew, densityNew;
-		int status_New = minOverCvacAlpha2D(
+		int status_New = minOverCvacAlpha(
 			kT, mu, resNew.Ngrid, argc, argv, log, freeEnergyNew, densityNew,
 			CvacNew, alphaNew);
 		
@@ -559,7 +574,7 @@ int fixedkTMuSolid(
 		    resMinPlus.Ngrid >= Ngrid_rangeMin)
 		{
 			double Cvac, alpha, freeEnergy, density;
-			int status_minOverCvacAlpha = minOverCvacAlpha2D(
+			int status_minOverCvacAlpha = minOverCvacAlpha(
 				kT, mu, resMinPlus.Ngrid, argc, argv, log, freeEnergy, 
 				density, Cvac, alpha);
 			
@@ -600,7 +615,7 @@ int fixedkTMuSolid(
 		    resMinMinus.Ngrid >= Ngrid_rangeMin)
 		{
 			double Cvac, alpha, freeEnergy, density;
-			int status_minOverCvacAlpha = minOverCvacAlpha2D(
+			int status_minOverCvacAlpha = minOverCvacAlpha(
 				kT, mu, resMinMinus.Ngrid, argc, argv, log, freeEnergy, 
 				density, Cvac, alpha);
 			
@@ -660,6 +675,33 @@ int fixedkTMuSolid(
 	statusMin += evalFromDataInterpolation(Ngrid_vec, density_vec, Ngrid_min, density_min);
 	statusMin += evalFromDataInterpolation(Ngrid_vec, Cvac_vec, Ngrid_min, Cvac_min);
 	statusMin += evalFromDataInterpolation(Ngrid_vec, alpha_vec, Ngrid_min, alpha_min);
+	
+	// Report
+	
+	log << endl;
+	log << "used Ngrid = ";
+	for (int Ngrid : Ngrid_vec) log << Ngrid << " ";
+	log << endl;
+	log << "free energies = ";
+	for (int freeEnergy : freeEnergy_vec) log << freeEnergy << " ";
+	log << endl;
+	log << "densities = ";
+	for (int density : density_vec) log << density << " ";
+	log << endl;
+	log << "Cvac = ";
+	for (int Cvac : Cvac_vec) log << Cvac << " ";
+	log << endl;
+	log << "alpha = ";
+	for (int alpha : alpha_vec) log << alpha << " ";
+	log << endl;
+	log << "minimum Ngrid = " << Ngrid_min << endl;
+	log << "minimum free energy = " << freeEnergy_min << endl;
+	log << "minimum density = " << density_min << endl;
+	log << "minimum Cvac = " << Cvac_min << endl;
+	log << "minimum alpha = " << alpha_min << endl;
+	log << "status = " << statusMin << endl;
+	
+	// Check validity of the result
 	
 	if (statusMin!=0)
 	{
@@ -1056,6 +1098,13 @@ int minOverCvacAlpha2D(double kT, double mu, int Ngrid,
 			
 			numDFTcomputations ++;
 			
+			log << endl;
+			log << "Testing candidate number" << j << endl;
+			log << "  alpha = " << alpha_candidates[j] << endl;
+			log << "  Cvac = " << Cvac_candidates[j] << endl;
+			log << "  freeEnergy_candidates = " << freeEnergy_candidates[j] << endl;
+			log << "  status = " << status_comp << endl;
+			
 			if (status_comp==0)
 			{
 				freeEnergy_candidates[j] = freeEnergy_temp;
@@ -1081,7 +1130,8 @@ int minOverCvacAlpha2D(double kT, double mu, int Ngrid,
 		
 		// Report
 		
-		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << endl;
+		log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 		
 		log << "alpha_current = " << alpha_current << endl;
 		log << "Cvac_current = " << Cvac_current << endl;
@@ -1217,9 +1267,301 @@ int minOverCvacAlpha2D(double kT, double mu, int Ngrid,
 
 
 
+////////////////////////////////////////////////////////////////////////////
+
+
+// Only minimise over the gaussian parameter alpha
+
+int minOverAlphaOnly(double kT, double mu, int Ngrid,
+                     int argc, char** argv, Log &log,
+                     double &freeEnergy_min, double &density_min,
+                     double &alpha_min)
+{
+	///////////////////////////////// log //////////////////////////////////
+	
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	log << myColor::RED << myColor::BOLD << "--- Minimisation over alpha (only) ---" << myColor::RESET << endl <<  "#" << endl;
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	
+	log << "kT = " << kT << endl;
+	log << "mu = " << mu << endl;
+	log << "Ngrid = " << Ngrid << endl;
+	
+	// Seperate log file for the DFT computation
+	// by default, we don't want the non-interesting log from the DFT to 
+	// pollute the current log
+	
+	Log logDFT("log_DFT.dat");
+	
+	//////////////////////////// read options //////////////////////////////
+	
+	string dataDir;
+	double kT_rangePrevResult = 0.03;
+	double mu_rangePrevResult = 0.15;
+	int Ngrid_rangePrevResult = 2;
+	double Cvac_min = 0; // default value
+	double Cvac_step = 0.0001;
+	double Cvac_max = 0.01;
+	double alpha_rangeMin;
+	double alpha_rangeMax;
+	double alpha_logStepMin;
+	double alpha_logStepMax;
+	
+	Options options;
+	
+	options.addOption("DataDirectory", &dataDir);
+	options.addOption("kT_rangePrevResult", &kT_rangePrevResult);
+	options.addOption("mu_rangePrevResult", &mu_rangePrevResult);
+	options.addOption("Ngrid_rangePrevResult", &Ngrid_rangePrevResult);
+	options.addOption("alpha_rangeMin", &alpha_rangeMin);
+	options.addOption("alpha_rangeMax", &alpha_rangeMax);
+	options.addOption("alpha_logStepMin", &alpha_logStepMin);
+	options.addOption("alpha_logStepMax", &alpha_logStepMax);
+	
+	options.read(argc, argv);
+	
+	///// Check if computation has not already been done /////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		stringstream ssNgrid; ssNgrid << Ngrid;
+		
+		ifstream dataInFile(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="
+		                    +ssMu.str()+"_Ngrid="+ssNgrid.str()+".dat");
+		
+		// if file exists, get the result from there
+		if (dataInFile)
+		{
+			// check if it was a successful computation
+			int success;
+			readDataFromFile(dataInFile, "success", success);
+			
+			if (success==1)  // bool "true" 
+			{
+				log << endl;
+				log << "Returning existing computation" << endl;
+				
+				// read results in file
+				readDataFromFile(dataInFile, "freeEnergy_min", freeEnergy_min);
+				readDataFromFile(dataInFile, "density_min", density_min);
+				readDataFromFile(dataInFile, "alpha_min", alpha_min);
+				
+				log << endl;
+				log << "freeEnergy_min = " << freeEnergy_min << endl;
+				log << "density_min = " << density_min << endl;
+				log << "alpha_min = " << alpha_min << endl;
+				
+				return 0;
+			}
+			
+			if (success==0)  // bool "false" 
+			{
+				log << endl;
+				log << "Returning existing computation (is a failed one)" << endl;
+				
+				return 1;
+			}
+		}
+	}
+	
+	
+	//////////////// By default, save result as a failure //////////////////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		stringstream ssNgrid; ssNgrid << Ngrid;
+		
+		ofstream dataFile(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="+ssMu.str()
+		                  +"_Ngrid="+ssNgrid.str()+".dat");
+		
+		dataFile << "# Result for min over alpha at " << endl;
+		dataFile << "kT = " << scientific << setprecision(4) << kT << endl;
+		dataFile << "mu = " << scientific << setprecision(4) << mu << endl;
+		dataFile << "Ngrid = " << Ngrid << endl;
+		dataFile << endl;
+		dataFile << "success = " << false << endl;
+	}
+	
+	
+	//////////////////////////// Minimisation //////////////////////////////
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "Starting minimisation" << endl;
+	
+	struct CompResult 
+	{
+		double freeEnergy;
+		double density;
+		double alpha;
+	};
+	
+	vector<CompResult> results;
+	bool foundMinimum = false;
+	bool init = true;
+	double alpha_current = alpha_rangeMax;
+	double alpha_logStep = -alpha_logStepMax;
+		
+	// loop to repeat calculations for different alpha until we find 
+	// the minimum or go outside the limits
+	while (!foundMinimum)
+	{
+		// increment except the first time
+		
+		if (init) init = false;
+		else alpha_current *= exp(alpha_logStep);
+		
+		// free energy computation
+		
+		int status_current;
+		double freeEnergy_current, density_current;
+		double Cvac_current = Cvac_min;
+		
+		do
+		{
+			log << "Trying alpha = " << alpha_current 
+			    << " and Cvac = " << Cvac_current << endl;
+			
+			status_current = DFTgaussian( argc, argv, logDFT, kT, mu, Ngrid, 
+				Cvac_current, alpha_current, freeEnergy_current, density_current);
+			
+			Cvac_current += Cvac_step;
+		}
+		while (status_current!=0 && Cvac_current<Cvac_max);
+		
+		if (status_current==0)
+		{
+			// report
+			
+			log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+			log << "alpha_current = " << alpha_current << endl;
+			log << "freeEnergy_current = " << freeEnergy_current << endl;
+			log << "density_current = " << density_current << endl;
+			
+			// add to the results
+			
+			struct CompResult res;
+			res.freeEnergy = freeEnergy_current;
+			res.density = density_current;
+			res.alpha = alpha_current;
+			results.push_back(res);
+		}
+		else
+		{
+			log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+			log << "Free energy computation failed for alpha_current = "
+			    << alpha_current << endl;
+		}
+		
+		
+		// checking if alpha still in the authorised boundaries
+		
+		if (alpha_current < alpha_rangeMin || alpha_current > alpha_rangeMax)
+		{
+			log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+			log << "ERROR: Went outside the authorised limits for alpha";
+			return 1;
+		}
+		
+		// go back and lower step if we detect an increase in free energy
+		// that means we crossed the minimum
+		
+		if (results.size()>=2)
+		{
+			double freeEnergy0 = results[results.size()-1].freeEnergy;
+			double freeEnergy1 = results[results.size()-2].freeEnergy;
+			
+			if (freeEnergy0 > freeEnergy1)
+			{
+				// reverse the search direction and lower the step
+				alpha_logStep *= -1;
+				alpha_logStep /=  2;
+				
+				// checking if we reached the max precision
+				// if we did, return values at alpha1 as the minimum
+				if (abs(alpha_logStep) < alpha_logStepMin)
+				{
+					alpha_min = alpha_current;
+					freeEnergy_min = freeEnergy_current;
+					density_min = density_current;
+					foundMinimum = true;
+				}
+			}
+		}
+	}
+	
+	
+	/////////////////////////////// Finalise ///////////////////////////////
+	
+	// Report
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "(Min alpha) Min alpha = " << alpha_min << endl;
+	log << "(Min alpha) Min freeEnergy = " << freeEnergy_min << endl;
+	log << "(Min alpha) Min density = " << density_min << endl;
+	
+	
+	////////////////////////// Save result in file /////////////////////////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		stringstream ssNgrid; ssNgrid << Ngrid;
+		
+		ofstream dataFile(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="+ssMu.str()
+		                  +"_Ngrid="+ssNgrid.str()+".dat");
+		
+		dataFile << "# Result for min over alpha at " << endl;
+		dataFile << "kT = " << scientific << setprecision(4) << kT << endl;
+		dataFile << "mu = " << scientific << setprecision(4) << mu << endl;
+		dataFile << "Ngrid = " << Ngrid << endl;
+		dataFile << endl;
+		dataFile << "alpha_min = " << scientific << setprecision(8) << alpha_min << endl;
+		dataFile << "freeEnergy_min = " << scientific << setprecision(8) << freeEnergy_min << endl;
+		dataFile << "density_min = " << scientific << setprecision(8) << density_min << endl;
+		dataFile << endl;
+		dataFile << "success = " << true << endl;
+	}
+	
+	return 0;
+}
+
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////
+
+
+
+int minOverCvacAlpha(double kT, double mu, int Ngrid,
+                     int argc, char** argv, Log &log,
+                     double &freeEnergy_min, double &density_min,
+                     double &Cvac_min, double &alpha_min)
+{
+	#ifdef MIN_OVER_ALPHA_ONLY
+	return minOverAlphaOnly(kT,mu,Ngrid,argc,argv,log,
+		freeEnergy_min,density_min,alpha_min);
+	
+	#else
+	return minOverCvacAlpha2D(kT,mu,Ngrid,argc,argv,log,
+		freeEnergy_min,density_min,Cvac_min,alpha_min);
+	
+	#endif
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////
+
+
+
+
 
 
 void DFTgaussianNoCatch( int argc, char** argv, Log &log,

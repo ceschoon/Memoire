@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 
 # MODIFY: Project name: used to name the executable 
-project(fixedkTMu)
+project(dftSolidComputation)
 
 # MODIFY: This needs to point to the Lib directory
 set(PATH_TO_DFT_LIB ${PROJECT_SOURCE_DIR}/../../Lib)
 
 # MODIFY: this is the app file
-add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/fixedkTMu.cpp ../utilities.cpp)
+add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/dftSolidComputation.cpp ../utilities.cpp)
 
 #MODIFY: enable these lines if you want to use Grace (Grace.h, Grace.cpp)
 #set(USE_GRACE true)

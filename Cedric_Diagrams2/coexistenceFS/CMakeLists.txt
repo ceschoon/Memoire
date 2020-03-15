@@ -24,6 +24,9 @@ set(POTENTIAL_WHDF true)
 #MODIFY: enable these lines if you want to use an analytic evaluation of weights
 set(ANALYTIC_WEIGHTS false)
 
+#MODIFY: enable these lines if you want to use an analytic evaluation of weights
+set(MIN_OVER_ALPHA_ONLY false)
+
 ################### End of customizations
 
 ## Set up the compilation
@@ -80,4 +83,8 @@ endif()
 
 if(ANALYTIC_WEIGHTS)
   target_compile_definitions(${PROJECT_NAME} PUBLIC ANALYTIC_WEIGHTS)
+endif()
+
+if(MIN_OVER_ALPHA_ONLY)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC MIN_OVER_ALPHA_ONLY)
 endif()

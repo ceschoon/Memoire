@@ -1,5 +1,11 @@
 #! /bin/bash
 
+cd dftSolidComputation
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
 cd fixedkTMu
 rm -r build debug
 ../../Config.sh
