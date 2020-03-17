@@ -21,6 +21,9 @@ using namespace std;
 #include "myColor.h"
 #include "SolidFCC.h"
 
+// Note on units: 
+//   the chemical potential mu is expressed in kT (it is beta*mu)
+//   the free energies (given per unit volume) are expressed in kT too
 
 // free energy and derivatives of the uniform phases
 
@@ -69,13 +72,13 @@ int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log,
 double uniformOmega(double kT, double mu, double aVdW, 
                     double hsd, double rho)
 {
-	double ideal = kT*(rho*std::log(rho)-rho);
+	double ideal = rho*std::log(rho)-rho;
 	double etaFMT = 4*M_PI/3*pow(hsd/2,3)*rho;
 	// Percus Yevick
-	//double hardCore = kT*rho*(  -std::log(1-etaFMT) + 3.0/2*etaFMT*(2-etaFMT)/pow(1-etaFMT,2)  );
+	//double hardCore = rho*(  -std::log(1-etaFMT) + 3.0/2*etaFMT*(2-etaFMT)/pow(1-etaFMT,2)  );
 	// Carnahan-Starling
-	double hardCore = kT*rho*etaFMT*(4-3*etaFMT)/pow(1-etaFMT,2);
-	double meanField = kT*aVdW*rho*rho;
+	double hardCore = rho*etaFMT*(4-3*etaFMT)/pow(1-etaFMT,2);
+	double meanField = aVdW*rho*rho;
 	double muN = mu*rho;
 	
 	return ideal + hardCore + meanField - muN;
@@ -90,13 +93,13 @@ double uniformOmega(double kT, double mu, double aVdW,
 double uniformOmegaDerivative(double kT, double mu, double aVdW, 
                               double hsd, double rho)
 {
-	double idealDerivative = kT*std::log(rho);
+	double idealDerivative = std::log(rho);
 	double etaFMT = 4*M_PI/3*pow(hsd/2,3)*rho;
 	// Percus Yevick
-	//double hardCoreDerivative = kT*(  -std::log(1-etaFMT) + etaFMT*(7-13.0/2*etaFMT+5.0/2*etaFMT*etaFMT)/pow(1-etaFMT,3)  );
+	//double hardCoreDerivative = (  -std::log(1-etaFMT) + etaFMT*(7-13.0/2*etaFMT+5.0/2*etaFMT*etaFMT)/pow(1-etaFMT,3)  );
 	// Carnahan-Starling
-	double hardCoreDerivative = kT*( 3*pow(etaFMT,3) - 9*pow(etaFMT,2) + 8*etaFMT) / pow(1-etaFMT,3);
-	double meanFieldDerivative = kT*2*aVdW*rho;
+	double hardCoreDerivative = ( 3*pow(etaFMT,3) - 9*pow(etaFMT,2) + 8*etaFMT) / pow(1-etaFMT,3);
+	double meanFieldDerivative = 2*aVdW*rho;
 	double muNDerivative = mu;
 	
 	return idealDerivative + hardCoreDerivative + meanFieldDerivative - muNDerivative;
@@ -111,13 +114,13 @@ double uniformOmegaDerivative(double kT, double mu, double aVdW,
 double uniformOmegaDerivative2(double kT, double mu, double aVdW, 
                                double hsd, double rho)
 {
-	double idealDerivative2 = kT/rho;
+	double idealDerivative2 = 1/rho;
 	double etaFMT = 4*M_PI/3*pow(hsd/2,3)*rho;
 	// Percus Yevick
-	//double hardCoreDerivative2 = kT*4*M_PI/3*pow(hsd/2,3)*(  pow(1-etaFMT,-1)  +  3*pow(1-etaFMT,-4)*etaFMT*(7-13.0/2*etaFMT+5.0/2*etaFMT*etaFMT)  +  pow(1-etaFMT,-3)*(7-13*etaFMT+15.0/2*etaFMT*etaFMT)  );
+	//double hardCoreDerivative2 = 4*M_PI/3*pow(hsd/2,3)*(  pow(1-etaFMT,-1)  +  3*pow(1-etaFMT,-4)*etaFMT*(7-13.0/2*etaFMT+5.0/2*etaFMT*etaFMT)  +  pow(1-etaFMT,-3)*(7-13*etaFMT+15.0/2*etaFMT*etaFMT)  );
 	// Carnahan-Starling
-	double hardCoreDerivative2 = kT*4*M_PI/3*pow(hsd/2,3)*( -2*etaFMT + 8 ) / pow(1-etaFMT,4);
-	double meanFieldDerivative2 = kT*2*aVdW;
+	double hardCoreDerivative2 = 4*M_PI/3*pow(hsd/2,3)*( -2*etaFMT + 8 ) / pow(1-etaFMT,4);
+	double meanFieldDerivative2 = 2*aVdW;
 	double muNDerivative2 = 0;
 	
 	return idealDerivative2 + hardCoreDerivative2 + meanFieldDerivative2 - muNDerivative2;
@@ -134,10 +137,10 @@ double uniformOmegaDerivative2(double kT, double mu, double aVdW,
 
 double muFromCoexDensity(double rho, double kT, double aVdW, double hsd)
 {
-	double ideal = kT * std::log(rho);
+	double ideal = std::log(rho);
 	double etaFMT = 4*M_PI/3*pow(hsd/2,3)*rho;
-	double hardCore = kT * etaFMT * (3*etaFMT*etaFMT-9*etaFMT+8) * pow(1-etaFMT,-3);
-	double meanField = kT * 2*aVdW*rho;
+	double hardCore = etaFMT * (3*etaFMT*etaFMT-9*etaFMT+8) * pow(1-etaFMT,-3);
+	double meanField = 2*aVdW*rho;
 	
 	return ideal + hardCore + meanField;
 }
@@ -159,7 +162,7 @@ double rho2FromRho1(double rho1, double kT, double aVdW, double hsd)
 	
 	double mu1 = muFromCoexDensity(rho1, kT, aVdW, hsd);
 	double omega1 = uniformOmega(kT, mu1, aVdW, hsd, rho1);
-	double omegaTilde = omega1 / kT * 4*M_PI/3*pow(hsd/2,3);
+	double omegaTilde = omega1 * 4*M_PI/3*pow(hsd/2,3);
 	double aVdWTilde = aVdW / (4*M_PI/3*pow(hsd/2,3));
 	
 	// Compute polynomial coefficients

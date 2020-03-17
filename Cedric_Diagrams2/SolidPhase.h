@@ -37,7 +37,7 @@ using namespace std;
 
 // Parameter space is (kT,mu,Ngrid,Cvac,alpha),
 // where kT     is the temperature
-//       mu     is the chemical potential
+//       mu     is the chemical potential (unit kT)
 //       Ngrid  is the number of grid points on the cell side
 //       Cvac   is the concentration of vacancies
 //       alpha  is the width parameters of the gaussian density profile
@@ -1102,7 +1102,7 @@ int minOverCvacAlpha2D(double kT, double mu, int Ngrid,
 			log << "Testing candidate number" << j << endl;
 			log << "  alpha = " << alpha_candidates[j] << endl;
 			log << "  Cvac = " << Cvac_candidates[j] << endl;
-			log << "  freeEnergy_candidates = " << freeEnergy_candidates[j] << endl;
+			log << "  freeEnergy = " << freeEnergy_temp << endl;
 			log << "  status = " << status_comp << endl;
 			
 			if (status_comp==0)
@@ -1535,6 +1535,8 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 
 
 
+
+
 ////////////////////////////////////////////////////////////////////////////
 
 
@@ -1852,6 +1854,7 @@ int surfacePlot( double kT, double mu, int Ngrid,
 				                << "failed" << endl;
 			}
 		}
+		surfacePlotFile << endl; // seperate data blocks
 	}
 	
 	/////////////////////////// Plot with gnuplot //////////////////////////
