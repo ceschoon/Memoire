@@ -24,6 +24,12 @@ using namespace std;
 
 #include <armadillo>
 
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_roots.h>
+#include <gsl/gsl_poly.h>
+#include <gsl/gsl_multimin.h>
+
 #include "options.h"
 #include "TimeStamp.h"
 
@@ -222,7 +228,7 @@ int fixedkTMuSolid(
 	
 	
 	///////// First, find a value of Ngrid that gives a successful /////////
-	/////////// computation of the free energy -> stating point ////////////
+	/////////// computation of the free energy -> starting point ///////////
 	
 	///// try to use prev result for (kT,mu) that is close /////
 	
@@ -383,6 +389,7 @@ int fixedkTMuSolid(
 				res.alpha = alpha;
 				
 				results.push_back(res);
+				Ngrid_intMin = Ngrid; // update current best Min
 				noSuccessfulComp = false;
 				break;
 			}
@@ -683,16 +690,16 @@ int fixedkTMuSolid(
 	for (int Ngrid : Ngrid_vec) log << Ngrid << " ";
 	log << endl;
 	log << "free energies = ";
-	for (int freeEnergy : freeEnergy_vec) log << freeEnergy << " ";
+	for (double freeEnergy : freeEnergy_vec) log << freeEnergy << " ";
 	log << endl;
 	log << "densities = ";
-	for (int density : density_vec) log << density << " ";
+	for (double density : density_vec) log << density << " ";
 	log << endl;
 	log << "Cvac = ";
-	for (int Cvac : Cvac_vec) log << Cvac << " ";
+	for (double Cvac : Cvac_vec) log << Cvac << " ";
 	log << endl;
 	log << "alpha = ";
-	for (int alpha : alpha_vec) log << alpha << " ";
+	for (double alpha : alpha_vec) log << alpha << " ";
 	log << endl;
 	log << "minimum Ngrid = " << Ngrid_min << endl;
 	log << "minimum free energy = " << freeEnergy_min << endl;
@@ -1537,6 +1544,277 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 
 
 
+
+
+////////////////////////////////////////////////////////////////////////////
+
+// Structure of parameters for the DFT function for the GSL algorithm
+
+struct DFT_params
+{
+	double kT, mu;
+	int Ngrid;
+	int argc;
+	char **argv;
+};
+
+// Function to minimise using the GSL minimisation algorithm (see below)
+
+double myfun_DFT (const gsl_vector *v, void *params)
+{
+	double Cvac  = exp( gsl_vector_get(v, 0) );
+	double alpha = exp( gsl_vector_get(v, 1) );
+	
+	struct DFT_params *p = (struct DFT_params *)params;
+	double kT = p->kT;
+	double mu = p->mu;
+	int Ngrid = p->Ngrid;
+	int argc = p->argc;
+	char **argv = p->argv;
+	
+	Log logDFT("log_DFT.dat");
+	
+	double freeEnergy,density;
+	int status = DFTgaussian( argc, argv, logDFT,
+	             kT, mu, Ngrid, Cvac, alpha, freeEnergy, density);
+	
+	if (status==0) return freeEnergy;
+	//else return GSL_NAN;
+	else return 1e8*(1-Cvac); // trick to avoid NAN error and lead the minimiser to larger Cvac
+}
+
+
+
+// Function to find the minimum of the free energy in the (Cvac,alpha) plane
+// using the Nelder-Mead algorithm (from the GSL library)
+
+int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
+                       int argc, char** argv, Log &log,
+                       double &freeEnergy_min, double &density_min,
+                       double &Cvac_min, double &alpha_min)
+{
+	///////////////////////////////// log //////////////////////////////////
+	
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	log << myColor::RED << myColor::BOLD << "--- Minimisation over alpha and Cvac (Nelder-Mead) ---" << myColor::RESET << endl <<  "#" << endl;
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	
+	log << "kT = " << kT << endl;
+	log << "mu = " << mu << endl;
+	log << "Ngrid = " << Ngrid << endl;
+	
+	
+	//////////////////////////// read options //////////////////////////////
+	
+	string dataDir;
+	
+	double Cvac_init  = 1e-3;
+	double alpha_init = 300;
+	double logStepInit = 0.25;
+	double logStepEnd = 0.0025;
+	
+	double Cvac_rangeMin = 1e-6;
+	double Cvac_rangeMax = 1e-1;
+	double alpha_rangeMin = 30;
+	double alpha_rangeMax = 3000;
+	
+	Options options;
+	
+	options.addOption("Cvac_init", &Cvac_init);
+	options.addOption("alpha_init", &alpha_init);
+	options.addOption("logStepInit", &logStepInit);
+	options.addOption("logStepEnd", &logStepEnd);
+	
+	options.addOption("Cvac_rangeMin", &Cvac_rangeMin);
+	options.addOption("Cvac_rangeMax", &Cvac_rangeMax);
+	options.addOption("alpha_rangeMin", &alpha_rangeMin);
+	options.addOption("alpha_rangeMax", &alpha_rangeMax);
+	
+	options.read(argc, argv);
+	options.write(log);
+	
+	double logCvac_init  = std::log(Cvac_init);
+	double logalpha_init = std::log(alpha_init);
+	
+	//////////////// By default, save result as a failure //////////////////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		stringstream ssNgrid; ssNgrid << Ngrid;
+		
+		ofstream dataFile(dataDir+"/minCvacAlpha_"+"kT="+sskT.str()+"_mu="+ssMu.str()
+		                  +"_Ngrid="+ssNgrid.str()+".dat");
+		
+		dataFile << "# Result for min over (Cvac,alpha) at " << endl;
+		dataFile << "kT = " << scientific << setprecision(4) << kT << endl;
+		dataFile << "mu = " << scientific << setprecision(4) << mu << endl;
+		dataFile << "Ngrid = " << Ngrid << endl;
+		dataFile << endl;
+		dataFile << "success = " << false << endl;
+	}
+	
+	
+	//////////////////////////// minimisation //////////////////////////////
+	
+	// parameters
+	struct DFT_params par;
+	par.kT = kT;
+	par.mu = mu;
+	par.Ngrid = Ngrid;
+	par.argc = argc;
+	par.argv = argv;
+	
+	// init variables
+	const gsl_multimin_fminimizer_type *T = 
+		gsl_multimin_fminimizer_nmsimplex2;
+	gsl_multimin_fminimizer *s = NULL;
+	gsl_vector *ss, *x;
+	gsl_multimin_function minex_func;
+	
+	size_t iter = 0;
+	int status;
+	double size;
+	
+	// Starting point 
+	x = gsl_vector_alloc (2);
+	gsl_vector_set (x, 0, logCvac_init);
+	gsl_vector_set (x, 1, logalpha_init);
+	
+	// Set initial step sizes to 1
+	ss = gsl_vector_alloc (2);
+	gsl_vector_set_all (ss, logStepInit);
+	
+	// Initialize method and iterate
+	minex_func.n = 2;
+	minex_func.f = myfun_DFT;
+	minex_func.params = &par;
+	
+	s = gsl_multimin_fminimizer_alloc (T, 2);
+	gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
+	
+	do
+	{
+		iter++;
+		status = gsl_multimin_fminimizer_iterate(s);
+		
+		if (status) break;
+		
+		size = gsl_multimin_fminimizer_size (s);
+		status = gsl_multimin_test_size (size, logStepEnd);
+		
+		if (status == GSL_SUCCESS)
+			log << "Converged to a minimum" << endl;
+		
+		log << "Iteration " << iter
+		    << "  Cvac  = " << exp(gsl_vector_get (s->x, 0))
+		    << "  alpha = " << exp(gsl_vector_get (s->x, 1))
+		    << "  freeEnergy = " << s->fval
+		    << "  simplex size = " << size
+		    << endl;
+		
+		// check if exceeded given range
+		if (exp(gsl_vector_get (s->x, 0))<Cvac_rangeMin || 
+		    exp(gsl_vector_get (s->x, 0))>Cvac_rangeMax)
+		{
+			log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+			log << "ERROR: Went outside of the limits" << endl;
+			break;
+		}
+		if (exp(gsl_vector_get (s->x, 1))<alpha_rangeMin || 
+		    exp(gsl_vector_get (s->x, 1))>alpha_rangeMax)
+		{
+			log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+			log << "ERROR: Went outside of the limits" << endl;
+			break;
+		}
+	}
+	while (status == GSL_CONTINUE && iter < 100);
+	
+	// save minimum
+	Cvac_min  = exp(gsl_vector_get (s->x, 0));
+	alpha_min = exp(gsl_vector_get (s->x, 1));
+	
+	// Deallocate memory
+	gsl_vector_free(x);
+	gsl_vector_free(ss);
+	gsl_multimin_fminimizer_free (s);
+	
+	if (status!=GSL_SUCCESS)	return 1;
+	
+	/////////////////////////////// Finalise ///////////////////////////////
+	
+	// Run at minimum to get the density
+	
+	Log logDFT("log_DFT.dat");
+	int statusMin = DFTgaussian( argc, argv, logDFT,
+		kT, mu, Ngrid, Cvac_min, alpha_min, freeEnergy_min, density_min);
+	
+	if (statusMin!=0)
+	{
+		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: Unable to perform the last computation at the minimum" << endl;
+	}
+	
+	// Report
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "(Min Cvac,alpha) Min Cvac = " << Cvac_min << endl;
+	log << "(Min Cvac,alpha) Min alpha = " << alpha_min << endl;
+	log << "(Min Cvac,alpha) Min freeEnergy = " << freeEnergy_min << endl;
+	log << "(Min Cvac,alpha) Min density = " << density_min << endl;
+	
+	
+	////////////////////////// Save result in file /////////////////////////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		stringstream ssNgrid; ssNgrid << Ngrid;
+		
+		ofstream dataFile(dataDir+"/minCvacAlpha_"+"kT="+sskT.str()+"_mu="+ssMu.str()
+		                  +"_Ngrid="+ssNgrid.str()+".dat");
+		
+		dataFile << "# Result for min over (Cvac,alpha) at " << endl;
+		dataFile << "kT = " << scientific << setprecision(4) << kT << endl;
+		dataFile << "mu = " << scientific << setprecision(4) << mu << endl;
+		dataFile << "Ngrid = " << Ngrid << endl;
+		dataFile << endl;
+		dataFile << "Cvac_min = " << scientific << setprecision(8) << Cvac_min << endl;
+		dataFile << "alpha_min = " << scientific << setprecision(8) << alpha_min << endl;
+		dataFile << "freeEnergy_min = " << scientific << setprecision(8) << freeEnergy_min << endl;
+		dataFile << "density_min = " << scientific << setprecision(8) << density_min << endl;
+		dataFile << endl;
+		dataFile << "success = " << true << endl;
+	}
+	
+	return 0;
+}
+
+
+int minOverCvacAlphaNM(double kT, double mu, int Ngrid,
+                       int argc, char** argv, Log &log,
+                       double &freeEnergy_min, double &density_min,
+                       double &Cvac_min, double &alpha_min)
+{
+	int status;
+	
+	try
+	{
+		status = minOverCvacAlphaNM_noCatch(kT, mu, Ngrid, argc, argv, log,
+			freeEnergy_min, density_min, Cvac_min, alpha_min);
+	}
+	catch (...) {return 1;}
+	
+	return status;
+}
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////
 
 
@@ -1551,8 +1829,10 @@ int minOverCvacAlpha(double kT, double mu, int Ngrid,
 		freeEnergy_min,density_min,alpha_min);
 	
 	#else
-	return minOverCvacAlpha2D(kT,mu,Ngrid,argc,argv,log,
+	return minOverCvacAlphaNM(kT,mu,Ngrid,argc,argv,log,
 		freeEnergy_min,density_min,Cvac_min,alpha_min);
+	//return minOverCvacAlpha2D(kT,mu,Ngrid,argc,argv,log,
+	//	freeEnergy_min,density_min,Cvac_min,alpha_min);
 	
 	#endif
 }
