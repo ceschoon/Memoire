@@ -8,8 +8,8 @@ using namespace std;
 // Read data from file
 // Expected format: parameter = value, all spaces and tabs are ignored
 
-void readDataFromFile(ifstream &file, string parameter, double &value);
-void readDataFromFile(ifstream &file, string parameter, int &value);
+int readDataFromFile(ifstream &file, string parameter, double &value);
+int readDataFromFile(ifstream &file, string parameter, int &value);
 
 // Read column vector from file
 // Expected format:

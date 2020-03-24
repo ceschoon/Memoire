@@ -24,7 +24,31 @@ rm -r build debug
 ../../dft_make.sh clean
 cd ..
 
+cd coexistenceVS
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
+cd coexistenceLS
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
 cd coexCurveFS
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
+cd coexCurveVS
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
+cd coexCurveLS
 rm -r build debug
 ../../Config.sh
 ../../dft_make.sh clean
@@ -35,3 +59,17 @@ rm -r build debug
 ../../Config.sh
 ../../dft_make.sh clean
 cd ..
+
+cd polyFit
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
+cd triplePoint
+rm -r build debug
+../../Config.sh
+../../dft_make.sh clean
+cd ..
+
+

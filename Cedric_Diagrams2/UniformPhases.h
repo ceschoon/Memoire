@@ -58,11 +58,15 @@ void findRootsdOmegadRhoSpinodal(double kT, double mu, double aVdW,
                                  double hsd, double rhoMin, double rhoMax,
                                  vector<double> &roots);
 
-// fluid free energy for given (kT,mu)
+// fluid properties for given (kT,mu)
 
 int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log, 
                    double &freeEnergyFluid, double &densityFluid);
 
+int fixedkTMuFluid2(double kT, double mu, int argc, char** argv, Log &log, 
+                    double &freeEnergyVapour, double &densityVapour,
+                    double &freeEnergyLiquid, double &densityLiquid,
+                    bool &supercritical);
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -722,7 +726,7 @@ void findRootsdOmegadRhoSpinodal(double kT, double mu, double aVdW,
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-// Function to compute free energy for the fluid at fixed (kT,mu)
+// Function to compute properties of the fluid at fixed (kT,mu)
 
 int fixedkTMuFluid(
 	double kT, double mu,                     // input
@@ -921,4 +925,205 @@ int fixedkTMuFluid(
 
 
 
+
+
+
+
+
+int fixedkTMuFluid2(double kT, double mu, int argc, char** argv, Log &log, 
+                    double &freeEnergyVapour, double &densityVapour,
+                    double &freeEnergyLiquid, double &densityLiquid,
+                    bool &supercritical)
+{
+	/////////////////////////////// Options ////////////////////////////////
+	
+	// geometry
+	double dx = -1; // -1 means do not use the grid aVdW
+	string pointsFile;
+	string dataDir;
+	
+	// potential
+	double eps1   = 1;
+	double sigma1 = 1;
+	double rcut1  = 3;
+	
+	// control for the limits
+	double rhoFluidMax = 1.5;
+	double rhoFluidMin = 0.001;
+	
+	Options options;
+	
+	// geometry
+	options.addOption("dx", &dx);
+	options.addOption("IntegrationPointsFile", &pointsFile);
+	options.addOption("DataDirectory", &dataDir);
+	
+	// potential
+	options.addOption("eps1",   &eps1);
+	options.addOption("sigma1", &sigma1);
+	options.addOption("rcut1",  &rcut1);
+	
+	// control for the limits
+	options.addOption("RhoFluidMax", &rhoFluidMax);
+	options.addOption("RhoFluidMin", &rhoFluidMin);
+	
+	options.read(argc, argv);
+	
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << myColor::RED << myColor::BOLD << "Input parameters:" << myColor::RESET << endl <<  "#" << endl;
+	options.write(log);
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	
+	
+	////// By default, store the result as a failure /////
+	// it will be overwritten in the case of a success
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		
+		ofstream dataFile(dataDir+"/kTMuFluid_"+"kT="+sskT.str()+"_mu="
+		                  +ssMu.str()+".dat");
+		
+		dataFile << "# Result for fluid computation at " << endl;
+		dataFile << "kT = " << scientific << setprecision(4) << kT << endl;
+		dataFile << "mu = " << scientific << setprecision(4) << mu << endl;
+		dataFile << endl;
+		dataFile << "success = " << false << endl;
+	}
+	
+	
+	////////////////// Compute aVdW and hsd parameters /////////////////////
+	
+	#ifdef POTENTIAL_WHDF
+	WHDF potential1(sigma1, eps1, rcut1);
+	log << "Using the WHDF potential" << endl;
+	#else
+	LJ potential1(sigma1, eps1, rcut1); // default
+	log << "Using the LJ potential" << endl;
+	#endif
+	
+	double hsd = potential1.getHSD(kT);
+	double aVdW = potential1.getVDW_Parameter(kT);
+	
+	if (dx>0) // if we want to use the VdW parameter of a grid of spacing dx
+	{
+		// values doesn't matter here
+		int Ngrid = 127;
+		double L[3] = {Ngrid*dx, Ngrid*dx, Ngrid*dx};
+		double mu = -6;
+		
+		SolidFCC theDensity1(dx, L, hsd);
+		
+		#ifdef ANALYTIC_WEIGHTS
+		log << "Using analytic evaluation of weights" << endl;
+		FMT_Species_Analytic species1(theDensity1,hsd, mu, Ngrid);
+		Interaction_Linear_Interpolation i1(species1,species1,potential1,kT,log);
+		i1.initialize();
+		
+		#else
+		log << "Using numeric evaluation of weights" << endl;
+		FMT_Species_Numeric species1(theDensity1,hsd,pointsFile, mu, Ngrid);
+		Interaction i1(species1,species1,potential1,kT,log,pointsFile);
+		i1.initialize();
+		#endif
+		
+		aVdW = i1.getVDWParameter()/2; // divide by 2 as not the same definition
+	}
+	
+	// Report
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "kT = " << kT << endl;
+	log << "dx = " << dx << endl;
+	log << "hsd = " << hsd << endl;
+	log << "aVdW = " << aVdW << endl;
+	
+	
+	///////////////// Compute free energy for the fluid ////////////////////
+	
+	bool successFluid = true;
+	
+	try
+	{
+		vector<double> roots;
+		findRootsdOmegadRhoSpinodal(kT, mu, aVdW, hsd, 
+			rhoFluidMin, rhoFluidMax, roots);
+		
+		if (roots.size()==1)
+		{
+			densityVapour = roots[0];
+			freeEnergyVapour = uniformOmega(kT, mu, aVdW, hsd, roots[0]);
+			densityLiquid = densityVapour;
+			freeEnergyLiquid = freeEnergyVapour;
+			supercritical = true;
+		}
+		else if (roots.size()==2)
+		{
+			densityVapour = (roots[0]<roots[1])?roots[0]:roots[1];
+			densityLiquid = (roots[0]<roots[1])?roots[1]:roots[0];
+			
+			freeEnergyVapour  = uniformOmega(
+				kT, mu, aVdW, hsd, densityVapour);
+			freeEnergyLiquid = uniformOmega(
+				kT, mu, aVdW, hsd, densityLiquid);
+			
+			supercritical = false;
+		}
+		else
+		{
+			log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+			log << "ERROR: Anormal number of roots for the fluid dOmega/drho" << endl;
+			successFluid = false;
+		}
+	}
+	catch (...)
+	{
+		successFluid = false;
+	}
+	
+	// Check status
+	
+	if (successFluid)
+	{
+		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "Vapour Density = " << densityVapour << endl;
+		log << "Vapour Free Energy = " << freeEnergyVapour << endl;
+		log << "Liquid Density = " << densityLiquid << endl;
+		log << "Liquid Free Energy = " << freeEnergyLiquid << endl;
+		log << "supercritical = " << supercritical << endl;
+	}
+	else
+	{
+		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: Fluid computation FAILED" << endl;
+		
+		return 1;
+	}
+	
+	///// Store the result /////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		
+		ofstream dataFile(dataDir+"/kTMuFluid_"+"kT="+sskT.str()+"_mu="
+		                  +ssMu.str()+".dat");
+		
+		dataFile << "# Result for fluid computation at " << endl;
+		dataFile << "kT = " << scientific << setprecision(4) << kT << endl;
+		dataFile << "mu = " << scientific << setprecision(4) << mu << endl;
+		dataFile << endl;
+		dataFile << "freeEnergyVapour = " << scientific << setprecision(8) << freeEnergyVapour << endl;
+		dataFile << "freeEnergyLiquid = " << scientific << setprecision(8) << freeEnergyLiquid << endl;
+		dataFile << "densityVapour    = " << scientific << setprecision(8) << densityVapour << endl;
+		dataFile << "densityLiquid    = " << scientific << setprecision(8) << densityLiquid << endl;
+		dataFile << "supercritical = " << supercritical << endl;
+		dataFile << endl;
+		dataFile << "success = " << true << endl;
+	}
+	
+	return 0;
+}
 

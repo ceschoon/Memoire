@@ -1620,6 +1620,8 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 	
 	Options options;
 	
+	options.addOption("DataDirectory", &dataDir);
+	
 	options.addOption("Cvac_init", &Cvac_init);
 	options.addOption("alpha_init", &alpha_init);
 	options.addOption("logStepInit", &logStepInit);

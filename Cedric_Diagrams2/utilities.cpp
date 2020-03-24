@@ -39,10 +39,12 @@ void removeTabsAndSpaces(string &str)
 
 // Expected format: parameter = value, all spaces and tabs are ignored
 
-void readDataFromFile(ifstream &file, string parameter, double &value)
+int readDataFromFile(ifstream &file, string parameter, double &value)
 {
 	file.clear();
 	file.seekg(0, ios_base::beg);
+	
+	bool foundParameter = false;
 	
 	string line = "";
 	while (getline(file, line))
@@ -53,14 +55,22 @@ void readDataFromFile(ifstream &file, string parameter, double &value)
 		int b = parameter.size();
 		
 		if (line.substr(0,b) == parameter && line[b]=='=') 
+		{
 			value = stod(line.substr(b+1, a-b-1));
+			foundParameter = true;
+		}
 	}
+	
+	if (!foundParameter) return 1;
+	return 0;
 }
 
-void readDataFromFile(ifstream &file, string parameter, int &value)
+int readDataFromFile(ifstream &file, string parameter, int &value)
 {
 	file.clear();
 	file.seekg(0, ios_base::beg);
+	
+	bool foundParameter = false;
 	
 	string line = "";
 	while (getline(file, line))
@@ -70,9 +80,15 @@ void readDataFromFile(ifstream &file, string parameter, int &value)
 		int a = line.size();
 		int b = parameter.size();
 		
-		if (line.substr(0,b) == parameter && line[b]=='=') 
+		if (line.substr(0,b) == parameter && line[b]=='=')
+		{ 
 			value = stoi(line.substr(b+1, a-b-1));
+			foundParameter = true;
+		}
 	}
+	
+	if (!foundParameter) return 1;
+	return 0;
 }
 
 
