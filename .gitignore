@@ -21,3 +21,9 @@
 !/Cedric_Plotential/*.h
 !/Cedric_Plotential/*.sh
 !/Cedric_Plotential/CMakeLists.txt
+
+!/Cedric_Frenkel
+/Cedric_Frenkel/*
+!/Cedric_Frenkel/*.cpp
+!/Cedric_Frenkel/*.h
+!/Cedric_Frenkel/*.sh
