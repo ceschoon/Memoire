@@ -362,6 +362,8 @@ void Interaction::initialize()
   
   // Now generate the FFT of the field  
   w_att_.do_real_2_fourier();
+  
+  initialized_ = true;
 }    
 
 
