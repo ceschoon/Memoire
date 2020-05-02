@@ -1,0 +1,2 @@
+The HCP lattice is incorrect.
+This code was built to chect that (and make nice plots of the FCC).
