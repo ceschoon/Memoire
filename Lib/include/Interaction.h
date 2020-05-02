@@ -204,6 +204,9 @@ class Interaction : public Interaction_Base
    */        
   virtual void generateWeights(Potential1 &v, Log& log);
   
+  //ADDED BY CEDRIC TO AVOID PURE FUNCTION ERROR
+  virtual double generateWeight(int Sx, int Sy, int Sz, double dx, Potential1& v);
+  
  protected:
   string pointsFile_; ///< The name of the file with the spherical integation points.
   stringstream weightsFile_; ///< The name of the file with the spherical integation points.

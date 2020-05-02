@@ -652,3 +652,9 @@ void Interaction::generateWeights(Potential1 &v, Log& log)
   w_att_.Real().save(of);
 }
 
+
+//ADDED BY CEDRIC TO AVOID PURE FUNCTION ERROR
+double Interaction::generateWeight(int Sx, int Sy, int Sz, double dx, Potential1& v)
+{
+	return 0;
+}
