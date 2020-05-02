@@ -50,7 +50,7 @@ double uniformOmegaDerivative2(double kT, double mu, double aVdW,
 double muFromCoexDensity(double rho, double kT, double aVdW, double hsd);
 
 int vapourLiquidCoexistence (int argc, char **argv, Log &log,
-                             double kT, double &rho1, double &rho2, 
+                             double kT, double &rhoV, double &rhoL, 
                              double &muCoex, double &freeEnergyCoex,
                              bool &superCritical);
 
@@ -74,7 +74,8 @@ int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log,
                    bool &supercritical);
 
 int compute_hsd_aVdW(int argc, char **argv, Log &log,
-                     double kT, double &hsd, double &aVdW);
+                     double kT, double &hsd, double &aVdW,
+                     bool hsdOnly = false);
 
 
 
@@ -249,7 +250,7 @@ double muDiff_f(double rho1, void *params)
 
 
 int vapourLiquidCoexistence (int argc, char **argv, Log &log,
-                             double kT, double &rho1, double &rho2, 
+                             double kT, double &rhoV, double &rhoL, 
                              double &muCoex, double &freeEnergyCoex,
                              bool &superCritical)
 {
@@ -402,10 +403,18 @@ int vapourLiquidCoexistence (int argc, char **argv, Log &log,
 	
 	//////////////////////// Coexistence properties ////////////////////////
 	
-	rho1 = r;
-	rho2 = rho2FromRho1(rho1, kT, aVdW, hsd);
-	muCoex = muFromCoexDensity(rho1, kT, aVdW, hsd);
-	freeEnergyCoex = uniformOmega(kT, muCoex, aVdW, hsd, rho1);
+	rhoV = r;
+	rhoL = rho2FromRho1(r, kT, aVdW, hsd);
+	
+	if (rhoV>rhoL) 
+	{
+		double temp = rhoV;
+		rhoV = rhoL;
+		rhoL = temp;
+	}
+	
+	muCoex = muFromCoexDensity(rhoV, kT, aVdW, hsd);
+	freeEnergyCoex = uniformOmega(kT, muCoex, aVdW, hsd, rhoV);
 	superCritical = false;
 	
 	return 0;
@@ -916,12 +925,13 @@ int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log,
 
 
 int compute_hsd_aVdW(int argc, char **argv, Log &log,
-                     double kT, double &hsd, double &aVdW)
+                     double kT, double &hsd, double &aVdW,
+                     bool hsdOnly)
 {
 	///////////////////////////////// Log //////////////////////////////////
 	
-	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
-	log << "== Computing hsd and aVdW ==" << endl;
+	log << myColor::GREEN << "==========================================" << myColor::RESET << endl << "#" << endl;
+	log << "== Computing hsd and aVdW for kT=" << kT << " ==" << endl;
 	
 	/////////////////////////////// Options ////////////////////////////////
 	
@@ -978,11 +988,11 @@ int compute_hsd_aVdW(int argc, char **argv, Log &log,
 	if (potentialType == "LJ")   hsd = potentialLJ.getHSD(kT);
 	if (potentialType == "WHDF") hsd = potentialWHDF.getHSD(kT);
 	
-	if (potentialType == "LJ")   aVdW = potentialLJ.getVDW_Parameter(kT);;
-	if (potentialType == "WHDF") aVdW = potentialWHDF.getVDW_Parameter(kT);;
+	if (!hsdOnly && potentialType == "LJ")   aVdW = potentialLJ.getVDW_Parameter(kT);;
+	if (!hsdOnly && potentialType == "WHDF") aVdW = potentialWHDF.getVDW_Parameter(kT);;
 	
-	
-	if (dx>0) // if we want to use the VdW parameter of a grid of spacing dx
+	// if we want to use the VdW parameter of a grid of spacing dx
+	if (!hsdOnly && dx>0) 
 	{
 		// values doesn't matter here
 		int Ngrid = 127;
@@ -1041,6 +1051,7 @@ int compute_hsd_aVdW(int argc, char **argv, Log &log,
 	
 	return 0;
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////

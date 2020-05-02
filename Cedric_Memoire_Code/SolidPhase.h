@@ -181,8 +181,8 @@ int fixedkTMuSolid(
 	///// By default, store the result as a failure /////
 	// It will be overwritten in the case of a successful computation
 	
-	sskT; sskT << scientific << setprecision(4) << kT;
-	ssMu; ssMu << scientific << setprecision(4) << mu;
+	sskT.str(""); sskT << scientific << setprecision(4) << kT;
+	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
 	
 	ofstream dataFile(dataDir+"/kTMuSolid_"+"kT="+sskT.str()+"_mu="
 	                  +ssMu.str()+".dat");
@@ -706,8 +706,8 @@ int fixedkTMuSolid(
 	
 	///// Store the result /////
 	
-	sskT; sskT << scientific << setprecision(4) << kT;
-	ssMu; ssMu << scientific << setprecision(4) << mu;
+	sskT.str(""); sskT << scientific << setprecision(4) << kT;
+	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
 	
 	dataFile.open(dataDir+"/kTMuSolid_"+"kT="+sskT.str()+"_mu="
 	              +ssMu.str()+".dat");
@@ -840,8 +840,8 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	
 	//////////////// By default, save result as a failure //////////////////
 	
-	sskT; sskT << scientific << setprecision(4) << kT;
-	ssMu; ssMu << scientific << setprecision(4) << mu;
+	sskT.str(""); sskT << scientific << setprecision(4) << kT;
+	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
 	ssNgrid; ssNgrid << Ngrid;
 	
 	ofstream dataFile(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="+ssMu.str()
@@ -975,8 +975,8 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	
 	////////////////////////// Save result in file /////////////////////////
 	
-	sskT; sskT << scientific << setprecision(4) << kT;
-	ssMu; ssMu << scientific << setprecision(4) << mu;
+	sskT.str(""); sskT << scientific << setprecision(4) << kT;
+	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
 	ssNgrid; ssNgrid << Ngrid;
 	
 	dataFile.open(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="+ssMu.str()
@@ -1231,8 +1231,8 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 	
 	////////////////////////// Save result in file /////////////////////////
 	
-	sskT; sskT << scientific << setprecision(4) << kT;
-	ssMu; ssMu << scientific << setprecision(4) << mu;
+	sskT.str(""); sskT << scientific << setprecision(4) << kT;
+	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
 	ssNgrid; ssNgrid << Ngrid;
 	
 	dataFile.open(dataDir+"/minCvacAlpha_"+"kT="+sskT.str()+"_mu="+ssMu.str()
