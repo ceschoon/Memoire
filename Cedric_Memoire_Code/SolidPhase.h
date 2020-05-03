@@ -842,7 +842,7 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	
 	sskT.str(""); sskT << scientific << setprecision(4) << kT;
 	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
-	ssNgrid; ssNgrid << Ngrid;
+	ssNgrid.str(""); ssNgrid << Ngrid;
 	
 	ofstream dataFile(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="+ssMu.str()
 	                  +"_Ngrid="+ssNgrid.str()+".dat");
@@ -977,7 +977,7 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	
 	sskT.str(""); sskT << scientific << setprecision(4) << kT;
 	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
-	ssNgrid; ssNgrid << Ngrid;
+	ssNgrid.str(""); ssNgrid << Ngrid;
 	
 	dataFile.open(dataDir+"/minAlphaOnly_"+"kT="+sskT.str()+"_mu="+ssMu.str()
 	                  +"_Ngrid="+ssNgrid.str()+".dat");
@@ -1233,7 +1233,7 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 	
 	sskT.str(""); sskT << scientific << setprecision(4) << kT;
 	ssMu.str(""); ssMu << scientific << setprecision(4) << mu;
-	ssNgrid; ssNgrid << Ngrid;
+	ssNgrid.str(""); ssNgrid << Ngrid;
 	
 	dataFile.open(dataDir+"/minCvacAlpha_"+"kT="+sskT.str()+"_mu="+ssMu.str()
 	                  +"_Ngrid="+ssNgrid.str()+".dat");
