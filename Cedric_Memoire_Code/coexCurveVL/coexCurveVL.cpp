@@ -61,18 +61,28 @@ int main(int argc, char** argv)
 	         << endl;
 	dataFile << scientific << setprecision(8);
 	
+	// first compute aVdW0 (aVdW for kT=1)
+	double hsd0,aVdW0; compute_hsd_aVdW(argc, argv, log, 1.0, hsd0, aVdW0);
+	
 	double kT = kTMin;
 	double kTStep = kTStepMax;
 	
 	while (kT<kTMax && kTStep>kTStepMin)
 	{
+		// compute hsd only
+		double hsd,aVdW; 
+		compute_hsd_aVdW(argc, argv, log, kT, hsd, aVdW, true);
+		
+		// compute aVdW from aVdW0
+		aVdW = aVdW0/kT;
+		
 		// Find coexistence densities and mu
 		
 		double rhoV,rhoL,mu,omega;
 		bool superCritical = false;
 		
-		int status = vapourLiquidCoexistence(argc, argv, log, kT, rhoV, rhoL, 
-			mu, omega, superCritical);
+		int status = vapourLiquidCoexistence(argc, argv, log, kT, hsd, aVdW,
+			rhoV, rhoL, mu, omega, superCritical);
 		
 		// Save coexistence densities under critical point
 		

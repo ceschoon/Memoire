@@ -50,7 +50,8 @@ double uniformOmegaDerivative2(double kT, double mu, double aVdW,
 double muFromCoexDensity(double rho, double kT, double aVdW, double hsd);
 
 int vapourLiquidCoexistence (int argc, char **argv, Log &log,
-                             double kT, double &rhoV, double &rhoL, 
+                             double kT, double hsd, double aVdW,
+                             double &rhoV, double &rhoL, 
                              double &muCoex, double &freeEnergyCoex,
                              bool &superCritical);
 
@@ -250,7 +251,8 @@ double muDiff_f(double rho1, void *params)
 
 
 int vapourLiquidCoexistence (int argc, char **argv, Log &log,
-                             double kT, double &rhoV, double &rhoL, 
+                             double kT, double hsd, double aVdW,
+                             double &rhoV, double &rhoL, 
                              double &muCoex, double &freeEnergyCoex,
                              bool &superCritical)
 {
@@ -275,18 +277,6 @@ int vapourLiquidCoexistence (int argc, char **argv, Log &log,
 	log << myColor::RED << myColor::BOLD << "Input parameters (Coex Densities):" << myColor::RESET << endl <<  "#" << endl;
 	options.write(log);
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
-	
-	//////////////////// Compute hsd and VdW parameters ////////////////////
-	
-	double hsd,aVdW;
-	int statusHSD = compute_hsd_aVdW(argc, argv, log, kT, hsd, aVdW);
-	if (statusHSD != 0) 
-	{
-		log << myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
-		log << "ERROR: Failed to compute hsd and aVdW" << endl;
-		
-		return 1;
-	}
 	
 	struct MuDiff_params params = {kT, aVdW, hsd};
 	
@@ -738,7 +728,7 @@ int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log,
 	
 	Options options;
 	
-	options.addOption("dataDir", &dataDir);
+	options.addOption("DataDirectory", &dataDir);
 	options.addOption("RhoFluidMax", &rhoFluidMax);
 	options.addOption("RhoFluidMin", &rhoFluidMin);
 	
