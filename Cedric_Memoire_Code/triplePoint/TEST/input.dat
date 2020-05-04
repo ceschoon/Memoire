@@ -1,0 +1,9 @@
+
+file_VS_rhoV  = ./data/fitCoefsVS_rhoV.dat
+file_VS_rhoS  = ./data/fitCoefsVS_rhoS.dat
+file_VS_mu    = ./data/fitCoefsVS_mu.dat
+file_VS_omega = ./data/fitCoefsVS_omega.dat
+file_LS_rhoL  = ./data/fitCoefsLS_rhoL.dat
+file_LS_rhoS  = ./data/fitCoefsLS_rhoS.dat
+
+estimated_kT_triple = 0.75
