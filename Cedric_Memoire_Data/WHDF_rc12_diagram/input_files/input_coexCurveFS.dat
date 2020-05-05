@@ -1,0 +1,5 @@
+
+DataDirectoryIn = ..//dataFS
+DataDirectoryOut = ..//coexCurves
+
+FluidType = fluid
