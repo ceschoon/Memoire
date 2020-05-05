@@ -55,3 +55,12 @@ int minFromDataParabola(vector<double> x, vector<double> y, double &xMin,
                         double &yMin);
 int minFromDataParabola(vector<int> x   , vector<double> y, double &xMin, 
                         double &yMin);
+
+// Evaluate function sampled by a few data points (using Parabola)
+
+int evalFromDataParabola(vector<double> x, vector<double> y, double xIn,
+                              double &yOut);
+int evalFromDataParabola(vector<int> x, vector<double> y, double xIn,
+                              double &yOut);
+
+

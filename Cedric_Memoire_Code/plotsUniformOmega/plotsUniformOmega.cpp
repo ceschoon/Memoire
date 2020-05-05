@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 	string fileName = "omega";
 	ofstream plotFile(dataDir+"/"+fileName+".gp");
 	
-	plotFile << "set terminal epslatex standalone" << endl;
+	plotFile << "set terminal epslatex standalone color size 9cm,7cm" << endl;
 	plotFile << "set output '" << fileName << ".tex'" << endl;
 	plotFile << endl;
 	plotFile << "#set title 'Free energy profile'" << endl;
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 	fileName = "domega";
 	plotFile.open(dataDir+"/"+fileName+".gp");
 	
-	plotFile << "set terminal epslatex standalone" << endl;
+	plotFile << "set terminal epslatex standalone color size 9cm,7cm" << endl;
 	plotFile << "set output '" << fileName << ".tex'" << endl;
 	plotFile << endl;
 	plotFile << "#set title 'First derivative'" << endl;
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
 	fileName = "d2omega";
 	plotFile.open(dataDir+"/"+fileName+".gp");
 	
-	plotFile << "set terminal epslatex standalone" << endl;
+	plotFile << "set terminal epslatex standalone color size 9cm,7cm" << endl;
 	plotFile << "set output '" << fileName << ".tex'" << endl;
 	plotFile << endl;
 	plotFile << "#set title 'Second derivative'" << endl;

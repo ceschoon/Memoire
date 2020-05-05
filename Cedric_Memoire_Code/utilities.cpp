@@ -548,3 +548,74 @@ int minFromDataParabola(vector<int> x, vector<double> y, double &xMin,
 	
 	return minFromDataParabola(xd,y,xMin,yMin);
 }
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+// Evaluate function sampled by a few data points
+// Parabolic interpolation 
+
+int evalFromDataParabola(vector<double> x, vector<double> y, double xIn,
+                              double &yOut)
+{
+	// search data point that is the closest to xIn
+	
+	int N = x.size();
+	int iTarget = 0;
+	
+	for (int i=0; i<x.size(); i++)
+	{
+		double d2_i = (x[i]-xIn)*(x[i]-xIn);
+		double d2_current = (x[iTarget]-xIn)*(x[iTarget]-xIn);
+		if (d2_i<d2_current) iTarget = i;
+	}
+	
+	
+	// parabolic interpolation
+	
+	// We want to find y = ax^2 + bx + c such as y(xi)=xi
+	// This is solving the matrix problem
+	// y1     x1^2 x1 1    a
+	// y2  =  x2^2 x2 1    b
+	// y3     x3^2 x3 1    c
+	
+	double x1 = x[iTarget-1];
+	double x2 = x[iTarget];
+	double x3 = x[iTarget+1];
+	
+	double y1 = y[iTarget-1];
+	double y2 = y[iTarget];
+	double y3 = y[iTarget+1];
+	
+	double det = (x1-x3)*(x3-x2)*(x2-x1);
+	
+	double a = - 1/det * (        (x3-x2)*y1 +         (x1-x3)*y2 +         (x2-x1)*y3);
+	double b =   1/det * ((x3+x2)*(x3-x2)*y1 + (x1+x3)*(x1-x3)*y2 + (x2+x1)*(x2-x1)*y3);
+	double c = - 1/det * (  x3*x2*(x3-x2)*y1 +   x1*x3*(x1-x3)*y2 +   x2*x1*(x2-x1)*y3);
+	
+	
+	// evaluate function
+	
+	yOut = a*xIn*xIn + b*xIn + c;
+	
+	return 0;
+}
+
+
+int evalFromDataParabola(vector<int> x, vector<double> y, double xIn,
+                              double &yOut)
+{
+	vector<double> xd(x.size(),0);
+	for (int i=0; i<x.size(); i++) xd[i] = x[i];
+	
+	return evalFromDataParabola(xd,y,xIn,yOut);
+}
+
+

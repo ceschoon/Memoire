@@ -655,18 +655,16 @@ int fixedkTMuSolid(
 	                            resMinPlus.alpha};
 	
 	
-	// find (double float) minimum from interpolation
+	// find (floating-point) minimum from interpolation
 	
-	int statusMin = minFromDataCSpline(Ngrid_vec, freeEnergy_vec, 
+	int statusMin = minFromDataParabola(Ngrid_vec, freeEnergy_vec, 
 		Ngrid_min, freeEnergy_min);
-	//int statusMin = minFromDataParabola(Ngrid_vec, freeEnergy_vec, 
-	//	Ngrid_min, freeEnergy_min);
 	
 	// Evaluate other quantities at the minimum
 	
-	statusMin += evalFromDataInterpolation(Ngrid_vec, density_vec, Ngrid_min, density_min);
-	statusMin += evalFromDataInterpolation(Ngrid_vec, Cvac_vec, Ngrid_min, Cvac_min);
-	statusMin += evalFromDataInterpolation(Ngrid_vec, alpha_vec, Ngrid_min, alpha_min);
+	statusMin += evalFromDataParabola(Ngrid_vec, density_vec, Ngrid_min, density_min);
+	statusMin += evalFromDataParabola(Ngrid_vec, Cvac_vec, Ngrid_min, Cvac_min);
+	statusMin += evalFromDataParabola(Ngrid_vec, alpha_vec, Ngrid_min, alpha_min);
 	
 	// Report
 	
