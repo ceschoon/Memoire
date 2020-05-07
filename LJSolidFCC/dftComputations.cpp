@@ -8,7 +8,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-using namespace std;
+using namespace std; 
 
 #ifdef USE_OMP
 #include <omp.h>
@@ -97,6 +97,7 @@ int main(int argc, char** argv)
 	double aVdW = 0;
 	double hsd = 0;
 	
+	// TODO: parallelise loop ?
 	for (int i=0; i<NpointsSize; i++)
 	{
 		for (int j=0; j<kTSize; j++)

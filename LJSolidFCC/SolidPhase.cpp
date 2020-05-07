@@ -8,7 +8,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-using namespace std;
+using namespace std; 
 
 #ifdef USE_OMP
 #include <omp.h>
