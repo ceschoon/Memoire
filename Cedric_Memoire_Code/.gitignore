@@ -1,0 +1,11 @@
+
+weights*
+
+*.dat
+*.svg
+*.pdf
+*.gp
+*plot_*.sh
+
+!input*.dat
+

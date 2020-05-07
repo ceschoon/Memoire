@@ -1,0 +1,11 @@
+
+Coex_Frenkel/*
+!Coex_Frenkel/*.cpp
+!Coex_Frenkel/*.h
+!Coex_Frenkel/*.sh
+
+Plotential/*
+!Plotential/*.cpp
+!Plotential/*.sh
+!Plotential/CMakeLists.txt
+
