@@ -1,0 +1,33 @@
+
+nCores = 20
+dx = 0.0125
+ncopy = 1
+IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss245.30138
+#DataDirectory = ./data
+UseAnalyticWeights = false
+
+eps1 = 1
+sigma1 = 1
+rcut1 = 3
+
+kT_rangeMin = 0.6
+kT_rangeMax = 0.6
+kT_rangeStep = 0.05
+
+mu_rangeMin = -7.6
+mu_rangeMax = -7.6
+mu_rangeStep = 0.25
+
+Ngrid_rangeMin = 128
+Ngrid_rangeMax = 128
+Ngrid_rangeStep = 1
+
+Cvac_rangeMin = 1e-8
+Cvac_rangeMax = 1e-1
+Cvac_logStep = 0.6
+
+alpha_rangeMin = 1
+alpha_rangeMax = 1000
+alpha_logStep = 0.2
+
+
