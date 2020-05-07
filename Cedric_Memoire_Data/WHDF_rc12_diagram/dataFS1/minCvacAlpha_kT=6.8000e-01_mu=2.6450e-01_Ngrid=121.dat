@@ -1,0 +1,11 @@
+# Result for min over (Cvac,alpha) at 
+kT = 6.8000e-01
+mu = 2.6450e-01
+Ngrid = 121
+
+Cvac_min = 2.63856606e-04
+alpha_min = 1.04150865e+03
+freeEnergy_min = -1.20551786e+00
+density_min = 1.15573758e+00
+
+success = 1

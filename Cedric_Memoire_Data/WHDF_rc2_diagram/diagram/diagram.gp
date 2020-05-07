@@ -10,9 +10,11 @@ set style data lines
 set grid
 set key bottom left
 
-set label 'V' at 0.03,1.1
-set label 'L' at 0.60,1.1
-set label 'S' at 1.00,1.1
+set xrange[0:1.0]
+
+set label 'V' at 0.02,1.04
+set label 'L' at 0.62,1.04
+set label 'S' at 0.92,1.04
 
 plot '../coexCurves/coexCurveVL.dat' using 2:1 linecolor 1 title 'DFT model', \
      '../coexCurves/coexCurveVL.dat' using 3:1 linecolor 1 notitle , \

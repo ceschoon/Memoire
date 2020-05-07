@@ -1,0 +1,9 @@
+
+dataFileName = ./data/coexCurveLS.dat
+coefFileName = ./data/fitCoefsLS_omega.dat
+polyFileName = ./data/fitCurveLS_omega.dat
+plotFileName = ./data/fitCurveLS_omega.svg
+
+orderPolyFit = 6
+colNumDataX = 0
+colNumDataY = 4

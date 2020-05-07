@@ -9,7 +9,7 @@ DataDirectory = ..//coexCurves
 
 kTMin = 0.3
 kTMax = 0.7
-kTStepMax = 0.01
+kTStepMax = 0.003
 kTStepMin = 1e-6
 
 ######## Potential #######

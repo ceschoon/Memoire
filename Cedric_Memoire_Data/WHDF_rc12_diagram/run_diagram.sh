@@ -32,8 +32,8 @@ cd ..
 
 ### compute critical point
 
-cd critical_triple_points
+cd critical_point
 ../../../Cedric_Memoire_Code/criticalPoint/criticalPoint \
 	../input_files/input_criticalPoint.dat
-mv log.dat log_criticalPoint.dat
+mv log_kTc.dat log_criticalPoint.dat
 cd ..
