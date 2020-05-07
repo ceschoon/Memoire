@@ -1,0 +1,9 @@
+
+dataFileName = ./data/coexCurveVS.dat
+coefFileName = ./data/fitCoefsVS_rhoS.dat
+polyFileName = ./data/fitCurveVS_rhoS.dat
+plotFileName = ./data/fitCurveVS_rhoS.svg
+
+orderPolyFit = 6
+colNumDataX = 0
+colNumDataY = 2
