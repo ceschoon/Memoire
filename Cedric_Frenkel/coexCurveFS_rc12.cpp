@@ -162,7 +162,7 @@ int main()
 	
 	// Compute coexistence curve
 	
-	for (double kT=0.1; kT<=1.4; kT+=0.01)
+	for (double kT=0.1; kT<=1.4; kT+=0.001)
 	{
 		double rhoF,rhoS;
 		int status = coexistenceFS(kT, rhoF, rhoS);

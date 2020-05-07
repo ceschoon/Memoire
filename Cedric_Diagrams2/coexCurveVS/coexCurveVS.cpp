@@ -47,7 +47,8 @@ int main(int argc, char** argv)
 	
 	ofstream outDataFile("coexCurveVS.dat");
 	outDataFile << "#kT				rhoV			rhoS			"
-	            << "muCoex			freeEnergy		" 
+	            << "muCoex			freeEnergy		Ngrid			"
+	            << "Cvac			alpha			"
 	            << endl;
 	outDataFile << scientific << setprecision(8);
 	
@@ -70,14 +71,18 @@ int main(int argc, char** argv)
 				log << endl;
 				log << "Found valid computation for kT=" << kT << endl;
 				
-				double rhoV, rhoS, muCoex, freeEnergyCoex;
+				double rhoV, rhoS, muCoex, freeEnergyCoex, Ngrid, Cvac, alpha;
 				readDataFromFile(dataInFile, "muCoex", muCoex);
 				readDataFromFile(dataInFile, "freeEnergyCoex", freeEnergyCoex);
 				readDataFromFile(dataInFile, "densityVapourCoex", rhoV);
 				readDataFromFile(dataInFile, "densitySolidCoex", rhoS);
+				readDataFromFile(dataInFile, "NgridCoex", Ngrid);
+				readDataFromFile(dataInFile, "CvacCoex", Cvac);
+				readDataFromFile(dataInFile, "alphaCoex", alpha);
 				
 				outDataFile << kT << " 	" << rhoV << " 	" << rhoS << " 	"
 				            << muCoex << " 	" << freeEnergyCoex << " 	"
+				            << Ngrid << " 	" << Cvac << " 	" << alpha << " 	"
 				            << endl;
 			}
 		}
@@ -99,8 +104,8 @@ int main(int argc, char** argv)
 	outPlotFile << "set grid" << endl;
 	outPlotFile << "set key top left" << endl;
 	outPlotFile << endl;
-	outPlotFile << "plot 'coexCurveVS.dat' using 2:1, \\" << endl;
-	outPlotFile << "     'coexCurveVS.dat' using 3:1" << endl;
+	outPlotFile << "plot 'coexCurveVS.dat' using 2:1 title 'vapour', \\" << endl;
+	outPlotFile << "     'coexCurveVS.dat' using 3:1 title 'solid' " << endl;
 	
 	int sysresult = system("gnuplot plot");
 	

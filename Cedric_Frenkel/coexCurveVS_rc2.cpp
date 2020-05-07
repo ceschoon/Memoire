@@ -16,6 +16,25 @@ using namespace std;
 
 
 
+// For the VS coexistence, the initial guess for the densities needs to
+// be more sophisticated.
+
+// It is very hard to find a suitable guess for the densities at low 
+// temperatures. We thus restrict ourselves to a temperature kT>0.1 .
+
+double guessV(double kT)
+{
+	double rho = 1e-4;
+	
+	if (kT < 0.35)  rho = 1e-7;
+	if (kT < 0.25)  rho = 1e-10;
+	if (kT < 0.17)  rho = 1e-15;
+	if (kT < 0.13)  rho = 1e-20;
+	
+	return rho;
+}
+
+
 
 double solidDensityAtSamePressure(double kT, double rhoV)
 {
@@ -91,11 +110,11 @@ double solidDensityAtSameMu(double kT, double rhoV)
 
 int coexistenceVS(double kT, double &rhoV, double &rhoS)
 {
-	rhoV = 0.02; // initial density
+	rhoV = guessV(kT); // initial density
 	double rhoS_p  = solidDensityAtSamePressure(kT, rhoV);
 	double rhoS_mu = solidDensityAtSameMu(kT, rhoV);
 	
-	double rho_step = 0.001; // initial step
+	double rho_step = 0.03*guessV(kT); // initial step
 	double rho_relprecision = 1e-5;
 	
 	while ( abs(rho_step/rhoV)           > rho_relprecision )//||
@@ -142,7 +161,7 @@ int main()
 	
 	// Compute coexistence curve
 	
-	for (double kT=0.01; kT<=0.5; kT+=0.01)
+	for (double kT=0.1; kT<=0.5; kT+=0.001)
 	{
 		double rhoV,rhoS;
 		int status = coexistenceVS(kT, rhoV, rhoS);

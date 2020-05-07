@@ -142,7 +142,7 @@ int main()
 	
 	// Compute coexistence curve
 	
-	for (double kT=0.5; kT<=1.4; kT+=0.01)
+	for (double kT=0.5; kT<=1.4; kT+=0.001)
 	{
 		double rhoL,rhoS;
 		int status = coexistenceLS(kT, rhoL, rhoS);

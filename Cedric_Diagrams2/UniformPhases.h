@@ -21,6 +21,8 @@ using namespace std;
 #include "myColor.h"
 #include "SolidFCC.h"
 
+#include "utilities.h"
+
 // Note on units: 
 //   the chemical potential mu is expressed in kT (it is beta*mu)
 //   the free energies (given per unit volume) are expressed in kT too
@@ -774,6 +776,50 @@ int fixedkTMuFluid(
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
 	
 	
+	///// Check if computation has not already been done /////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		
+		ifstream dataInFile(dataDir+"/kTMuFluid_"+"kT="+sskT.str()+"_mu="
+		                    +ssMu.str()+".dat");
+		
+		// if file exists, get the result from there
+		if (dataInFile)
+		{
+			// check if it was a successful computation
+			int success;
+			readDataFromFile(dataInFile, "success", success);
+			
+			if (success==1)  // bool "true" 
+			{
+				log << endl;
+				log << "Returning existing computation" << endl;
+				
+				// read results in file
+				readDataFromFile(dataInFile, "freeEnergyFluid", freeEnergyFluid);
+				readDataFromFile(dataInFile, "densityFluid", densityFluid);
+				
+				log << endl;
+				log << "freeEnergyFluid = " << freeEnergyFluid << endl;
+				log << "densityFluid = " << densityFluid << endl;
+				
+				return 0;
+			}
+			
+			if (success==0)  // bool "false" 
+			{
+				log << endl;
+				log << "Returning existing computation (is a failed one)" << endl;
+				
+				return 1;
+			}
+		}
+	}
+	
+	
 	////// By default, store the result as a failure /////
 	// it will be overwritten in the case of a success
 	
@@ -974,6 +1020,57 @@ int fixedkTMuFluid2(double kT, double mu, int argc, char** argv, Log &log,
 	options.write(log);
 	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
 	
+	
+	///// Check if computation has not already been done /////
+	
+	if (!dataDir.empty())
+	{
+		stringstream sskT; sskT << scientific << setprecision(4) << kT;
+		stringstream ssMu; ssMu << scientific << setprecision(4) << mu;
+		
+		ifstream dataInFile(dataDir+"/kTMuFluid_"+"kT="+sskT.str()+"_mu="
+		                    +ssMu.str()+".dat");
+		
+		// if file exists, get the result from there
+		if (dataInFile)
+		{
+			// check if it was a successful computation
+			int success;
+			readDataFromFile(dataInFile, "success", success);
+			
+			if (success==1)  // bool "true" 
+			{
+				log << endl;
+				log << "Returning existing computation" << endl;
+				
+				// read results in file
+				int supercritical_temp;
+				readDataFromFile(dataInFile, "freeEnergyVapour", freeEnergyVapour);
+				readDataFromFile(dataInFile, "freeEnergyLiquid", freeEnergyLiquid);
+				readDataFromFile(dataInFile, "densityVapour", densityVapour);
+				readDataFromFile(dataInFile, "densityLiquid", densityLiquid);
+				readDataFromFile(dataInFile, "supercritical", supercritical_temp);
+				supercritical = (supercritical_temp==1); // convert to bool
+				
+				log << endl;
+				log << "freeEnergyVapour = " << freeEnergyVapour << endl;
+				log << "freeEnergyLiquid = " << freeEnergyLiquid << endl;
+				log << "densityVapour = " << densityVapour << endl;
+				log << "densityLiquid = " << densityLiquid << endl;
+				log << "supercritical = " << supercritical << endl;
+				
+				return 0;
+			}
+			
+			if (success==0)  // bool "false" 
+			{
+				log << endl;
+				log << "Returning existing computation (is a failed one)" << endl;
+				
+				return 1;
+			}
+		}
+	}
 	
 	////// By default, store the result as a failure /////
 	// it will be overwritten in the case of a success

@@ -124,7 +124,7 @@ cd ../..
 ##########
 ## triplePoint: compute properties at the triple point
 
-cp polyFit/TEST/data/* triplePoint/TEST/data/*
+cp polyFit/TEST/data/* triplePoint/TEST/data/
 cd triplePoint/TEST/
 ../triplePoint input.dat
 cd ../..
@@ -132,11 +132,11 @@ cd ../..
 ##########
 ## drawDiagram: generate a plot of the full phase diagram
 
-cp coexCurveVL/TEST/coexCurveVL.dat drawDiagram/
-cp coexCurveVS/TEST/coexCurveVS.dat drawDiagram/
-cp coexCurveLS/TEST/coexCurveLS.dat drawDiagram/
-cp coexCurveFS/TEST/coexCurveFS.dat drawDiagram/
-cd drawdiagram/
+cp coexCurveVL/TEST/coexCurveVL.dat drawDiagram/TEST/data/
+cp coexCurveVS/TEST/coexCurveVS.dat drawDiagram/TEST/data/
+cp coexCurveLS/TEST/coexCurveLS.dat drawDiagram/TEST/data/
+cp coexCurveFS/TEST/coexCurveFS.dat drawDiagram/TEST/data/
+cd drawDiagram/TEST/
 gnuplot plot_diagram
-cd ..
+cd ../..
 

@@ -183,8 +183,8 @@ int main(int argc, char** argv)
 	outPlotFile << "set output '" << plotFileName << "'" << endl;
 	outPlotFile << endl;
 	outPlotFile << "set title \"Data Versus Fit\" font \",20\"" << endl;
-	outPlotFile << "set xlabel \"y\" font \",20\"" << endl;
-	outPlotFile << "set ylabel \"x\" font \",20\"" << endl;
+	outPlotFile << "set xlabel \"x\" font \",20\"" << endl;
+	outPlotFile << "set ylabel \"y\" font \",20\"" << endl;
 	outPlotFile << "set style data lines" << endl;
 	outPlotFile << "set grid" << endl;
 	outPlotFile << "set key top left" << endl;

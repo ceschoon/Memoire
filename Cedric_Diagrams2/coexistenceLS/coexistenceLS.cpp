@@ -38,6 +38,9 @@ int muComputation( double kT, double mu,
                    vector<double> &mu_vec, 
                    vector<double> &freeEnergySolid_vec,
                    vector<double> &densitySolid_vec,
+                   vector<double> &Ngrid_vec,
+                   vector<double> &Cvac_vec,
+                   vector<double> &alpha_vec,
                    vector<double> &freeEnergyLiquid_vec,
                    vector<double> &densityLiquid_vec)
 {
@@ -67,6 +70,9 @@ int muComputation( double kT, double mu,
 		mu_vec.push_back(mu);
 		freeEnergySolid_vec.push_back(freeEnergySolid);
 		densitySolid_vec.push_back(densitySolid);
+		Ngrid_vec.push_back(Ngrid_min);
+		Cvac_vec.push_back(Cvac_min);
+		alpha_vec.push_back(alpha_min);
 		freeEnergyLiquid_vec.push_back(freeEnergyLiquid);
 		densityLiquid_vec.push_back(densityLiquid);
 	}
@@ -78,6 +84,9 @@ int muComputation( double kT, double mu,
 		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 		log << "Solid Free Energy = " << freeEnergySolid << endl;
 		log << "Solid Density     = " << densitySolid << endl;
+		log << "Ngrid = " << Ngrid_min << endl;
+		log << "Cvac  = " << Cvac_min  << endl;
+		log << "alpha = " << alpha_min << endl;
 		log << "Liquid Free Energy = " << freeEnergyLiquid << endl;
 		log << "Liquid Density     = " << densityLiquid << endl;
 	}
@@ -178,6 +187,9 @@ int main(int argc, char** argv)
 		vector<double> mu_vec;
 		vector<double> freeEnergySolid_vec;
 		vector<double> densitySolid_vec;
+		vector<double> Ngrid_vec;
+		vector<double> Cvac_vec;
+		vector<double> alpha_vec;
 		vector<double> freeEnergyLiquid_vec;
 		vector<double> densityLiquid_vec;
 		
@@ -193,9 +205,11 @@ int main(int argc, char** argv)
 		// TODO: currently not robust to failures !!!
 		int status_0 = muComputation(kT, mu_0, argc, argv, log, 
 			freeEnergyDiff_0, mu_vec, freeEnergySolid_vec, densitySolid_vec,
+			Ngrid_vec, Cvac_vec,alpha_vec,
 			freeEnergyLiquid_vec, densityLiquid_vec);
 		int status_1 = muComputation(kT, mu_1, argc, argv, log, 
 			freeEnergyDiff_1, mu_vec, freeEnergySolid_vec, densitySolid_vec,
+			Ngrid_vec, Cvac_vec,alpha_vec,
 			freeEnergyLiquid_vec, densityLiquid_vec);
 		 
 		double mu_current,freeEnergyDiff_current;
@@ -240,6 +254,7 @@ int main(int argc, char** argv)
 				mu_current += muStep;
 				muComputation(kT, mu_current, argc, argv, log, freeEnergyDiff_current, 
 					mu_vec, freeEnergySolid_vec, densitySolid_vec,
+					Ngrid_vec, Cvac_vec,alpha_vec,
 					freeEnergyLiquid_vec, densityLiquid_vec);
 				
 				crossedCoex = true;
@@ -259,6 +274,7 @@ int main(int argc, char** argv)
 			muComputation(kT, mu_current, argc, argv, log, 
 			              freeEnergyDiff_current, mu_vec, 
 			              freeEnergySolid_vec, densitySolid_vec,
+			              Ngrid_vec, Cvac_vec,alpha_vec,
 			              freeEnergyLiquid_vec, densityLiquid_vec);
 			
 			// stop if we cross coexistence point (change in sign)
@@ -293,6 +309,18 @@ int main(int argc, char** argv)
 			densitySolid_vec[i]     = densitySolid_vec[j_min]; 
 			densitySolid_vec[j_min] = temp;
 			
+			temp = Ngrid_vec[i]; 
+			Ngrid_vec[i]     = Ngrid_vec[j_min]; 
+			Ngrid_vec[j_min] = temp;
+			
+			temp = Cvac_vec[i]; 
+			Cvac_vec[i]     = Cvac_vec[j_min]; 
+			Cvac_vec[j_min] = temp;
+			
+			temp = alpha_vec[i]; 
+			alpha_vec[i]     = alpha_vec[j_min]; 
+			alpha_vec[j_min] = temp;
+			
 			temp = freeEnergyLiquid_vec[i]; 
 			freeEnergyLiquid_vec[i]     = freeEnergyLiquid_vec[j_min]; 
 			freeEnergyLiquid_vec[j_min] = temp;
@@ -320,6 +348,21 @@ int main(int argc, char** argv)
 			log << densitySolid_vec[i] << " ";
 		
 		log << endl;
+		log << "Ngrid_vec = ";
+		for (int i=0; i<Ngrid_vec.size(); i++)
+			log << Ngrid_vec[i] << " ";
+		
+		log << endl;
+		log << "Cvac_vec = ";
+		for (int i=0; i<Cvac_vec.size(); i++)
+			log << Cvac_vec[i] << " ";
+		
+		log << endl;
+		log << "alpha_vec = ";
+		for (int i=0; i<alpha_vec.size(); i++)
+			log << alpha_vec[i] << " ";
+		
+		log << endl;
 		log << "freeEnergyLiquid_vec = ";
 		for (int i=0; i<freeEnergyLiquid_vec.size(); i++)
 			log << freeEnergyLiquid_vec[i] << " ";
@@ -340,6 +383,9 @@ int main(int argc, char** argv)
 		double muCoex = 0;
 		double freeEnergyCoex = 0;
 		double densitySolidCoex = 0;
+		double NgridCoex = 0;
+		double CvacCoex = 0;
+		double alphaCoex = 0;
 		double densityLiquidCoex = 0;
 		
 		// check if has the same sign before searching the zero
@@ -353,6 +399,9 @@ int main(int argc, char** argv)
 			
 			// find min densities
 			evalFromDataInterpolation(mu_vec, densitySolid_vec, muCoex, densitySolidCoex);
+			evalFromDataInterpolation(mu_vec, Ngrid_vec, muCoex, NgridCoex);
+			evalFromDataInterpolation(mu_vec, Cvac_vec, muCoex, CvacCoex);
+			evalFromDataInterpolation(mu_vec, alpha_vec, muCoex, alphaCoex);
 			evalFromDataInterpolation(mu_vec, densityLiquid_vec, muCoex, densityLiquidCoex);
 		}
 		else
@@ -374,6 +423,9 @@ int main(int argc, char** argv)
 		dataFile << "muCoex = " << scientific << setprecision(8) << muCoex << endl;
 		dataFile << "freeEnergyCoex = " << scientific << setprecision(8) << freeEnergyCoex << endl;
 		dataFile << "densitySolidCoex = " << scientific << setprecision(8) << densitySolidCoex << endl;
+		dataFile << "NgridCoex = " << scientific << setprecision(8) << NgridCoex << endl;
+		dataFile << "CvacCoex = " << scientific << setprecision(8) << CvacCoex << endl;
+		dataFile << "alphaCoex = " << scientific << setprecision(8) << alphaCoex << endl;
 		dataFile << "densityLiquidCoex = " << scientific << setprecision(8) << densityLiquidCoex << endl;
 		dataFile << endl;
 		dataFile << "success = " << foundCoex << endl;
