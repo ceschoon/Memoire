@@ -1,0 +1,32 @@
+######## Geometry #######
+
+dx = 0
+#dx = 0.0125
+#IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss325.52978
+
+######## Potential #######
+
+PotentialType = LJ
+eps1 = 1.0
+sigma1 = 1
+rcut1 = 3
+
+######## Thermodynamics #######
+
+kT = 1.2
+mu = -3.002135
+
+RhoMinPlot = 0.01
+RhoMaxPlot = 0.61
+RhoStepPlot = 0.001
+
+######## Initial guesses for the root finding algorithms #######
+
+Rho1Min = 1e-100
+Rho1Max = 1.5
+Rho1FinestStep = 1e-6
+
+######## Parameters of the free energy computation #######
+
+RhoFluidMin = 1e-100
+RhoFluidMax = 1.5
