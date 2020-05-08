@@ -1,0 +1,5 @@
+*
+!*.sh
+!*.gp
+!*.pdf
+!.gitignore
