@@ -20,13 +20,17 @@ set label 'F' at 0.28,1.44
 set label 'U' at 0.25,0.9
 set label 'U' at 0.80,0.7
 
-set label at 0.244, 1.287 "" point pointtype 5 linecolor 4 front
 set label at 0.039, 1.000 "" point pointtype 7 linecolor 7
 set label at 0.561, 1.000 "" point pointtype 7 linecolor 7
 set label at 0.001, 0.600 "" point pointtype 7 linecolor 1
 set label at 0.962, 0.600 "" point pointtype 7 linecolor 1
 set label at 0.774, 1.000 "" point pointtype 7 linecolor 2
 set label at 0.922, 1.000 "" point pointtype 7 linecolor 2
+
+set label at 0.244, 1.287 "" point pointtype 5 linecolor 4 front
+set label at 0.010, 0.792 "" point pointtype 7 linecolor 4 front
+set label at 0.684, 0.792 "" point pointtype 7 linecolor 4 front
+set label at 0.908, 0.792 "" point pointtype 7 linecolor 4 front
 
 set arrow from 0.0,0.792 to 1.1,0.792 nohead linewidth 2 dashtype 2 linecolor 4 
 
