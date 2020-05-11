@@ -1,0 +1,28 @@
+######## Geometry #######
+
+#dx = 0
+dx = 0.0125
+IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss325.52978
+
+######## Iteration on kT #######
+
+kT_init = 1
+rel_precision = 1e-8
+
+######## Potential #######
+
+eps1 = 1.0
+sigma1 = 1
+rcut1 = 4
+PotentialType = LJ
+
+######## Initial guesses for the root finding algorithms #######
+
+Rho1Min = 1e-20
+Rho1Max = 1.0
+Rho1FinestStep = 1e-6
+
+######## Parameters of the free energy computation #######
+
+RhoFluidMin = 1e-20
+RhoFluidMax = 1.0
