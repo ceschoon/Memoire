@@ -1,0 +1,9 @@
+
+dataFileName = ./data/coexCurveVL.dat
+coefFileName = ./data/fitCoefsVL_rhoV.dat
+polyFileName = ./data/fitCurveVL_rhoV.dat
+plotFileName = ./data/fitCurveVL_rhoV.svg
+
+orderPolyFit = 6
+colNumDataX = 0
+colNumDataY = 1

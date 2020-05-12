@@ -1,0 +1,9 @@
+
+dataFileName = ./data/coexCurveVL.dat
+coefFileName = ./data/fitCoefsVL_mu.dat
+polyFileName = ./data/fitCurveVL_mu.dat
+plotFileName = ./data/fitCurveVL_mu.svg
+
+orderPolyFit = 6
+colNumDataX = 0
+colNumDataY = 3

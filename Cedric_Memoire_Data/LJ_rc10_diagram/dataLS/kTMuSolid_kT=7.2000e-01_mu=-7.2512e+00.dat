@@ -1,0 +1,11 @@
+# Result for solid computation at 
+kT = 7.2000e-01
+mu = -7.2512e+00
+
+Ngrid_min = 1.30045956e+02
+Cvac_min = 6.22465914e-05
+alpha_min = 1.21347559e+02
+freeEnergy_min = 7.75849558e-01
+density_min = 9.31134188e-01
+
+success = 1

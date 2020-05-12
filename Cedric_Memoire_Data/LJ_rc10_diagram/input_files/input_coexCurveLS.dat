@@ -1,0 +1,5 @@
+
+DataDirectoryIn = ..//dataLS
+DataDirectoryOut = ..//coexCurves
+
+FluidType = liquid
