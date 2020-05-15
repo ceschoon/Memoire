@@ -8,4 +8,4 @@ Plotential/*
 !Plotential/*.cpp
 !Plotential/*.sh
 !Plotential/CMakeLists.txt
-
+!Plotential/TEST

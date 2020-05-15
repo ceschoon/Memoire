@@ -20,8 +20,7 @@ int main(int argc, char** argv)
 	////////////////////////////// Parameters //////////////////////////////
 	
 	// files
-	int sysresult = system("mkdir -p data");
-	ofstream dataFile("data/potentialDataPlot.dat");
+	ofstream dataFile("potentials.dat");
 	dataFile << "r				LJ (rc=3)		WHDF (rc=2)		"
 	         << "WHDF (rc=1.2)	tWF (rc=3)		"
 	         << scientific << endl;
@@ -89,43 +88,70 @@ int main(int argc, char** argv)
 	// plot v(r)
 	for (double r=rMin; r<rMax; r+=rStep)
 	{
-		dataFile << r << " 	"
-		         << potential1.V(r) << " 	"
-		         << potential2.V(r) << " 	"
-		         << potential3.V(r) << " 	"
-		         << potential4.V(r) << " 	"
-		         << endl;
+		dataFile << r << " 	";
+		
+		if (r<potential1.getRcut()) dataFile << potential1.V(r) << " 	";
+		else dataFile << 0 << " 	";
+		
+		if (r<potential2.getRcut()) dataFile << potential2.V(r) << " 	";
+		else dataFile << 0 << " 	";
+		
+		if (r<potential3.getRcut()) dataFile << potential3.V(r) << " 	";
+		else dataFile << 0 << " 	";
+		
+		if (r<potential4.getRcut()) dataFile << potential4.V(r) << " 	";
+		else dataFile << 0 << " 	";
+		
+		dataFile << endl;
 	}
 	
-	/////////////////////////// gnuplot script /////////////////////////////
 	
-	ofstream plotFile;
-	plotFile.open("data/plot_potential");
 	
-	plotFile << "set term svg enhanced mouse #size 600,500" << endl;
-	plotFile << "set output 'potential.svg'" << endl;
+	////////////////////// Gnuplot plot script /////////////////////////////
+	
+	ofstream plotFile("potentials.gp");
+	
+	plotFile << "set terminal epslatex standalone color size 12cm,9cm" << endl;
+	plotFile << "set output 'potentials.tex'" << endl;
 	plotFile << endl;
-	plotFile << "set title \"Potential shapes\" font \",20\"" << endl;
-	plotFile << "set xlabel \"r/sigma\" font \",20\"" << endl;
-	plotFile << "set ylabel \"V(r)/epsilon\" font \",20\"" << endl;
-	plotFile << endl;
+	plotFile << "#set title 'Potential shapes'" << endl;
+	plotFile << "set xlabel '\\Large$r/\\sigma$'" << endl;
+	plotFile << "set ylabel '\\Large$v(r)/\\varepsilon$'" << endl;
+	plotFile << "set grid linecolor rgb '#B0B0B0'" << endl;
+	plotFile << "set key top right" << endl;
 	plotFile << "set xrange [" << rMin << ":" << rMax << "]" << endl;
 	plotFile << "set yrange [-1.2:1.2]" << endl;
 	plotFile << endl;
-	plotFile << "set key top right" << endl;
-	plotFile << endl;
-	
-	plotFile << "plot \"potentialDataPlot.dat\" using 1:2 with lines "
-	         << "title \"LJ rc=3\" ,\\" << endl;
-	plotFile << "     \"potentialDataPlot.dat\" using 1:3 with lines "
-	         << "title \"WHDF rc=2\" ,\\" << endl;
-	plotFile << "     \"potentialDataPlot.dat\" using 1:4 with lines "
-	         << "title \"WHDF rc=1.2\" ,\\" << endl;
-	//plotFile << "     \"potentialDataPlot.dat\" using 1:5 with lines "
-	//         << "title \"tWF rc=3\"" << endl;
+	plotFile << "plot \"potentials.dat\" using 1:2 with lines linecolor 8"
+	         << "title \"LJ $r_c=3$\" ,\\" << endl;
+	plotFile << "     \"potentials.dat\" using 1:3 with lines linecolor 1"
+	         << "title \"WHDF $r_c=2$\" ,\\" << endl;
+	plotFile << "     \"potentials.dat\" using 1:4 with lines linecolor 2"
+	         << "title \"WHDF $r_c=1.2$\" ,\\" << endl;
+	//plotFile << "     \"potentials.dat\" using 1:5 with lines linecolor 7"
+	//         << "title \"tWF $r_c=3$\"" << endl;
 	
 	plotFile.close();
-	sysresult = system("cd data; gnuplot plot_potential");
+	
+	
+	//////////////////// Bash script to plot everything ////////////////////
+	
+	
+	ofstream shellFile("plot_everything.sh");
+	
+	shellFile << "#! /bin/bash" << endl;
+	shellFile << "" << endl;
+	shellFile << "gnuplot   potentials.gp" << endl;
+	shellFile << "" << endl;
+	shellFile << "pdflatex   potentials.tex" << endl;
+	shellFile << "" << endl;
+	shellFile << "rm   potentials.aux   potentials.log   potentials.tex   potentials-inc.eps   potentials-inc-eps-converted-to.pdf" << endl;
+	shellFile << "" << endl;
+	
+	shellFile.close();
+	
+	int sysresult = system("chmod +x plot_everything.sh; ./plot_everything.sh");
+	
 	
 	return 0;
 }
