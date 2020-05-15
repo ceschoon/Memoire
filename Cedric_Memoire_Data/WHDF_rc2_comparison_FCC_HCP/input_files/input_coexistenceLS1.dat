@@ -1,0 +1,42 @@
+
+nCores = 20
+dx = 0.0125
+ncopy = 1
+IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss325.52978
+DataDirectory = ..//dataLS1
+UseAnalyticWeights = false
+
+SolidType = HCP
+
+kTStart = 0.8
+kTStop = 0.801
+kTStep = 0.05
+
+muCoexGuess = -3.3
+muRange = 2    # mu between muCoexGuess-muRange and muCoexGuess+muRange
+muStep = 0.2
+
+FluidType = liquid
+RhoFluidMax = 1.5
+RhoFluidMin = 1e-100
+
+PotentialType = WHDF
+eps1 = 1
+sigma1 = 1
+rcut1 = 2
+
+Ngrid_rangeMin = 85
+Ngrid_rangeMax = 105
+Ngrid_rangeStep = 1
+Ngrid_maxNumTrials = 4
+
+Cvac_init = 5e-4
+alpha_init = 50
+logStepInit = 0.25
+logStepEnd = 0.0025
+
+Cvac_rangeMin = 1e-8
+Cvac_rangeMax = 1e-1
+alpha_rangeMin = 20
+alpha_rangeMax = 10000
+

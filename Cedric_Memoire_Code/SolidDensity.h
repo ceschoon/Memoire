@@ -218,6 +218,70 @@ class SolidDensity : public Density
 	
 	
 	
+	virtual void initialiseHexagonal(double alpha, double a_latt, 
+				double b_latt, double c_latt, int ncells, double prefac)
+	{
+		cout << "Initialisation of Solid Density (Hexagonal Lattice)" << endl;
+		
+		// basis for one unit cell (custom rectangular cell)
+		double atoms[4][3];
+		
+		atoms[0][0] = 0.0;
+		atoms[0][1] = 0.0;
+		atoms[0][2] = 0.0;
+		
+		atoms[1][0] = a_latt/2;
+		atoms[1][1] = b_latt/2;
+		atoms[1][2] = 0.0;
+		
+		atoms[2][0] = a_latt/2;
+		atoms[2][1] = b_latt/6;
+		atoms[2][2] = c_latt/2;
+		
+		atoms[3][0] = 0.0;
+		atoms[3][1] = 4*b_latt/6;
+		atoms[3][2] = c_latt/2;
+		
+		// loop over grid points
+		for(int i=0;i<Nx_;i++)
+		for(int j=0;j<Ny_;j++)
+		for(int k=0;k<Nz_;k++)
+		{
+			double x = getX(i);
+			double y = getY(j);
+			double z = getZ(k);
+			
+			double dsum = 0;
+			
+			// sum the contributions from all lattice sites
+			for(int icell=0;icell < ncells; icell++) 
+			for(int jcell=0;jcell < ncells; jcell++)
+			for(int kcell=0;kcell < ncells; kcell++)
+			for(int l=0;l<4;l++)
+			{
+				double dx = fabs(x-atoms[l][0]-icell*a_latt); if(dx > L_[0]/2) dx -= L_[0];
+				double dy = fabs(y-atoms[l][1]-jcell*b_latt); if(dy > L_[1]/2) dy -= L_[1];
+				double dz = fabs(z-atoms[l][2]-kcell*c_latt); if(dz > L_[2]/2) dz -= L_[2];
+				
+				double r2 = dx*dx+dy*dy+dz*dz;
+				dsum += prefac*pow(alpha/M_PI,1.5)*exp(-alpha*r2);
+			}
+			
+			// Uncomment these lines to help avoid eta>1 exceptions
+			//double small_value = 1e-6;
+			//if(dsum < small_value) dsum = small_value;
+			
+			set_Density_Elem(i,j,k,dsum);
+		}
+		
+		cout << "Finished Initialisation of Solid Density" << endl;
+	}
+	
+	
+	
+	
+	
+	
 	
 	// This gets called after every update and for each species: seq is the species number. 
 

@@ -1,0 +1,19 @@
+
+nCores = 20
+dx = 0.0125
+ncopy = 1
+IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss325.52978
+DataDirectory = ./data
+UseAnalyticWeights = true
+SolidType = HCP
+
+kT = 1
+Mu = 0
+Ngrid = 95
+Cvac = 5e-4
+alpha = 50
+
+eps1 = 1
+sigma1 = 1
+rcut1 = 2
+PotentialType = WHDF

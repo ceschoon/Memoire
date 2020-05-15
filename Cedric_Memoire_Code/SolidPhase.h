@@ -76,8 +76,6 @@ int DFTgaussian( int argc, char** argv, Log &log,
                  double &freeEnergy, double &density);
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////
 
 // Function to find minimum of free energy in (Ngrid,Cvac,alpha)-space.
@@ -1531,6 +1529,468 @@ int DFTgaussianNoCatch( int argc, char** argv, Log &log,
 
 
 
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+struct OptionsDFTgaussian 
+{
+	// control
+	int nCores;
+	
+	// geometry
+	double dx;
+	string pointsFile;
+	string useAnalyticWeights;
+	
+	// potential
+	double eps1;
+	double sigma1;
+	double rcut1;
+	string potentialType;
+	
+	// density initialisation
+	int ncopy;
+	int ncopy_range;
+};
+
+
+int readOptionsDFTgaussian(int argc, char **argv, 
+                           OptionsDFTgaussian &optionsDFT, Log &log)
+{
+	// control
+	int nCores = 6;
+	
+	// geometry
+	double dx = 0.1;
+	string pointsFile("..//SS31-Mar-2016//ss109.05998");
+	string useAnalyticWeights = "false";
+	
+	// potential
+	double eps1   = 1;
+	double sigma1 = 1;
+	double rcut1  = 3;
+	string potentialType = "LJ";
+	
+	// density initialisation
+	int ncopy = 1;
+	int ncopy_range = 2;
+	
+	////////////////////////////////////////////
+	
+	Options options;
+	
+	// control
+	options.addOption("nCores", &nCores);
+	
+	// geometry
+	options.addOption("dx", &dx);
+	options.addOption("IntegrationPointsFile", &pointsFile);
+	options.addOption("UseAnalyticWeights", &useAnalyticWeights);
+	
+	// potential
+	options.addOption("eps1",   &eps1);
+	options.addOption("sigma1", &sigma1);
+	options.addOption("rcut1",  &rcut1);
+	options.addOption("PotentialType",  &potentialType);
+	
+	// density initialisation
+	options.addOption("ncopy", &ncopy);
+	options.addOption("ncopy_range", &ncopy_range);
+	
+	options.read(argc, argv);
+	
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	
+	options.write(log);
+	
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	
+	// Check the potential option
+	
+	if (potentialType == "LJ") log << "Using the LJ potential" << endl;
+	else if (potentialType == "WHDF") log << "Using the WHDF potential" << endl;
+	else
+	{
+		log << myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: Potential type not identified" << endl;
+		log << "       Unable to perform Solid DFT computations" << endl;
+		
+		return 1;
+	}
+	
+	// Check the weights option
+	
+	if (useAnalyticWeights == "true") log << "Using analytic evaluation of weights" << endl;
+	else if (useAnalyticWeights == "false") log << "Using numeric evaluation of weights" << endl;
+	else
+	{
+		log << myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: Unrecognised option for UseAnalyticWeights" << endl;
+		log << "       Unable to perform Solid DFT computations" << endl;
+		
+		return 1;
+	}
+	
+	// Write the options to output
+	
+	optionsDFT.nCores = nCores;
+	optionsDFT.dx = dx;
+	optionsDFT.pointsFile = pointsFile;
+	optionsDFT.useAnalyticWeights = useAnalyticWeights;
+	optionsDFT.eps1 = eps1;
+	optionsDFT.sigma1 = sigma1;
+	optionsDFT.rcut1 = rcut1;
+	optionsDFT.potentialType = potentialType;
+	optionsDFT.ncopy = ncopy;
+	optionsDFT.ncopy_range = ncopy_range;
+	
+	return 0;
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+
+int DFTgaussianNoCatch_Hex( OptionsDFTgaussian optionsDFT, Log &log,
+                 double kT, double mu, 
+                 int Ngridx, int Ngridy, int Ngridz,
+                 double Cvac, double alpha,
+                 double &freeEnergy, double &density)
+{
+	///////////////////////////// Logging //////////////////////////////////
+	
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl;
+	log << myColor::RED << myColor::BOLD << "--- DFT gaussian computation at fixed (kT,mu,Ngrid,Cvac,alpha) ---" << myColor::RESET << endl <<  "#" << endl;
+	log << myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	
+	log << "kT = " << kT << endl;
+	log << "mu = " << mu << endl;
+	log << "Ngridx = " << Ngridx << endl;
+	log << "Ngridy = " << Ngridy << endl;
+	log << "Ngridz = " << Ngridz << endl;
+	log << "Cvac = " << Cvac << endl;
+	log << "alpha = " << alpha << endl;
+	
+	log << "Completed step: Logging" << endl;
+	
+	////////////////////////////  Parameters ///////////////////////////////
+	
+	int nCores = optionsDFT.nCores;
+	double dx = optionsDFT.dx;
+	string pointsFile = optionsDFT.pointsFile;
+	string useAnalyticWeights = optionsDFT.useAnalyticWeights;
+	double eps1 = optionsDFT.eps1;
+	double sigma1 = optionsDFT.sigma1;
+	double rcut1 = optionsDFT.rcut1;
+	string potentialType = optionsDFT.potentialType;
+	int ncopy = optionsDFT.ncopy;
+	int ncopy_range = optionsDFT.ncopy_range;
+	
+	log << "Completed step: Parameters" << endl;
+	
+	
+	#ifdef USE_OMP    
+	omp_set_dynamic(0);
+	omp_set_num_threads(nCores);
+	
+	int fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+	log << "omp max threads = " << omp_get_max_threads() << endl;
+	#endif
+	
+	
+	///////////////////////  Initialise the System /////////////////////////
+	
+	
+	int ncopy3= ncopy*ncopy*ncopy;
+	double L[3] = {Ngridx*dx,Ngridy*dx,Ngridz*dx};
+	double alatt = L[0]/ncopy;
+	double blatt = L[1]/ncopy;
+	double clatt = L[2]/ncopy;
+	
+	log << "Completed step: Initialisation (geometry)" << endl;
+	
+	////////////////////////////////////
+	// Create potential && effective hsd
+	
+	LJ potentialLJ(sigma1, eps1, rcut1);
+	WHDF potentialWHDF(sigma1, eps1, rcut1);
+	
+	double hsd1;
+	if (potentialType == "LJ")   hsd1 = potentialLJ.getHSD(kT);
+	if (potentialType == "WHDF") hsd1 = potentialWHDF.getHSD(kT);
+	
+	log << "Completed step: Initialisation (potentials)" << endl;
+	
+	/////////////////////////
+	// Create density objects
+	
+	SolidDensity theDensity1(dx, L, hsd1);
+	theDensity1.initialiseHexagonal(alpha, alatt, blatt, clatt, ncopy, 1-Cvac);
+	
+	log << "Natoms = " << theDensity1.getNumberAtoms() << endl;
+	
+	log << "Completed step: Initialisation (density)" << endl;
+	
+	////////////////////////////////////////////////////////////////////////
+	
+	// Create DFT and related objects 
+	// Then compute physical properties
+	
+	// Duplicate code for both analytic and numeric weights
+	// (how to do it better?)
+	
+	stringstream ssSeq;
+	ssSeq << Ngridx << Ngridy << Ngridz;
+	int seq = stoi(ssSeq.str());
+	
+	
+	//////// Analytic weights version ////////
+	
+	if (useAnalyticWeights == "true")
+	{
+		// Create DFT and related objects 
+		
+		FMT_Species_Analytic speciesA(theDensity1,hsd1, mu, seq);
+		
+		DFT dftA(&speciesA);
+		
+		RSLT fmtA;
+		dftA.addHardCoreContribution(&fmtA);
+		
+		log << "Completed step: DFT (fmt species)" << endl;
+		
+		Interaction_Interpolation_QF iA_LJ(speciesA,speciesA,potentialLJ,kT,log);
+		Interaction_Interpolation_QF iA_WHDF(speciesA,speciesA,potentialWHDF,kT,log);
+		
+		if (potentialType == "LJ") 
+		{
+			iA_LJ.initialize();
+			dftA.addInteraction(&iA_LJ);
+		}
+		if (potentialType == "WHDF")
+		{
+			iA_WHDF.initialize();
+			dftA.addInteraction(&iA_WHDF);
+		}
+		
+		speciesA.setChemPotential(mu);
+		
+		log << "Completed step: DFT (interaction)" << endl;
+		
+		// Compute physical properties
+		
+		freeEnergy = dftA.calculateFreeEnergyAndDerivatives(false)/(L[0]*L[1]*L[2]);
+		density = theDensity1.getNumberAtoms()/(L[0]*L[1]*L[2]);
+		
+		log << "Completed step: DFT (calculations)" << endl;
+	}
+	
+	
+	
+	//////// Numeric weights version ////////
+	
+	if (useAnalyticWeights == "false")
+	{
+		// Create DFT and related objects 
+		
+		FMT_Species_Numeric speciesN(theDensity1,hsd1,pointsFile, mu, seq);
+		
+		DFT dftN(&speciesN);
+		
+		RSLT fmtN;
+		dftN.addHardCoreContribution(&fmtN);
+		
+		log << "Completed step: DFT (fmt species)" << endl;
+		
+		Interaction iN_LJ(speciesN,speciesN,potentialLJ,kT,log,pointsFile);
+		Interaction iN_WHDF(speciesN,speciesN,potentialWHDF,kT,log,pointsFile);
+		
+		if (potentialType == "LJ") 
+		{
+			iN_LJ.initialize();
+			dftN.addInteraction(&iN_LJ);
+		}
+		if (potentialType == "WHDF")
+		{
+			iN_WHDF.initialize();
+			dftN.addInteraction(&iN_WHDF);
+		}
+		
+		speciesN.setChemPotential(mu);
+		
+		log << "Completed step: DFT (interaction)" << endl;
+		
+		// Compute physical properties
+		
+		freeEnergy = dftN.calculateFreeEnergyAndDerivatives(false)/(L[0]*L[1]*L[2]);
+		density = theDensity1.getNumberAtoms()/(L[0]*L[1]*L[2]);
+		
+		log << "Completed step: DFT (calculations)" << endl;
+	}
+	
+	log << "Completed step: DFT" << endl;
+	
+	/////// Report ///////
+	
+	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
+	log << "(DFT Gaussian profile) Free Energy = " << freeEnergy << endl;
+	log << "(DFT Gaussian profile) Density = " << density << endl;
+	
+	return 0;
+}
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+struct CompResult 
+{
+	double freeEnergy;
+	double density;
+};
+
+
+int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
+                 double kT, double mu, int Ngrid,
+                 double Cvac, double alpha,
+                 double &freeEnergy, double &density)
+{
+	// Parameters for DFT computations
+	
+	OptionsDFTgaussian optionsDFT;
+	int status = readOptionsDFTgaussian(argc, argv, optionsDFT, log);
+	if (status!=0) return 1;
+	
+	/*
+	#ifdef USE_OMP    
+	omp_set_dynamic(0);
+	omp_set_num_threads(3);
+	
+	int fftw_init_threads();
+	fftw_plan_with_nthreads(omp_get_max_threads());
+	log << "omp max threads = " << omp_get_max_threads() << endl;
+	#endif
+	*/
+	
+	// Compute the number of grid points for each direction
+	
+	double Ngridy_trueHCP = Ngrid*sqrt(3);
+	double Ngridz_trueHCP = Ngrid*sqrt(8.0/3);
+	
+	int Ngridx = Ngrid;
+	int Ngridy = int(Ngridy_trueHCP);
+	int Ngridz = int(Ngridz_trueHCP);
+	
+	// Computations for all number of grid points
+	
+	CompResult results_yz[3][3];
+	bool success = true;
+	
+	// TODO: curently unable to parallelise the code
+	//#pragma omp parallel for
+	for (int ij=0; ij<3*3; ij++)
+	{
+		int i = ij/3;
+		int j = ij%3;
+		
+		stringstream ssLog;
+		ssLog << "log_dummy_" << i << "_" << j << ".dat";
+		Log log_dummy(ssLog.str().c_str());
+		
+		int Ngridy_i = Ngridy + (i-1);
+		int Ngridz_j = Ngridz + (j-1);
+		
+		double freeEnergy_ij, density_ij;
+		
+		int status = DFTgaussianNoCatch_Hex( optionsDFT, log_dummy, kT, mu, 
+			Ngridx, Ngridy_i, Ngridz_j, Cvac, alpha, freeEnergy_ij, density_ij);
+		
+		if (status!=0) success = false;
+		
+		results_yz[i][j].freeEnergy = freeEnergy_ij;
+		results_yz[i][j].density = density_ij;
+	}
+	
+	if (!success) return 1;
+	
+	// Interpolation in the z-direction
+	
+	CompResult results_y[3];
+	
+	for(int i=0; i<3; i++)
+	{
+		vector<double> Ngridz_vec(3,0);
+		vector<double> freeEnergy_vec(3,0);
+		vector<double> density_vec(3,0);
+		
+		for (int j=0; j<3; j++) 
+		{
+			Ngridz_vec[j] = Ngridz + (j-1);
+			freeEnergy_vec[j] = results_yz[i][j].freeEnergy;
+			density_vec[j] = results_yz[i][j].density;
+		}
+		
+		evalFromDataInterpolation(Ngridz_vec, freeEnergy_vec, 
+		                          Ngridz_trueHCP, freeEnergy);
+		
+		evalFromDataInterpolation(Ngridz_vec, density_vec, 
+		                          Ngridz_trueHCP, density);
+		
+		results_y[i].freeEnergy = freeEnergy;
+		results_y[i].density = density;
+	}
+	
+	// Interpolation in the y-direction
+	
+	vector<double> Ngridy_vec(3,0);
+	vector<double> freeEnergy_vec(3,0);
+	vector<double> density_vec(3,0);
+	
+	for (int j=0; j<3; j++) 
+	{
+		Ngridy_vec[j] = Ngridy + (j-1);
+		freeEnergy_vec[j] = results_y[j].freeEnergy;
+		density_vec[j] = results_y[j].density;
+	}
+	
+	evalFromDataInterpolation(Ngridy_vec, freeEnergy_vec, 
+	                          Ngridy_trueHCP, freeEnergy);
+	
+	evalFromDataInterpolation(Ngridy_vec, density_vec, 
+	                          Ngridy_trueHCP, density);
+	
+	return 0;
+}
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 
@@ -1539,10 +1999,28 @@ int DFTgaussian( int argc, char** argv, Log &log,
                  double kT, double mu, int Ngrid, double Cvac, double alpha,
                  double &freeEnergy, double &density)
 {
+	string solidType = "FCC";
+	
+	Options options;
+	options.addOption("SolidType",  &solidType);
+	options.read(argc, argv);
+	options.write(log);
+	
 	try
 	{
-		int status = DFTgaussianNoCatch( argc, argv, log, kT, mu, Ngrid, 
-		                                 Cvac, alpha, freeEnergy, density);
+		int status;
+		
+		if (solidType=="HCP") 
+		{
+			status = DFTgaussianNoCatch_HCP( argc, argv, log, kT, mu, Ngrid, 
+			                                 Cvac, alpha, freeEnergy, density);
+		}
+		else
+		{
+			status = DFTgaussianNoCatch( argc, argv, log, kT, mu, Ngrid, 
+			                             Cvac, alpha, freeEnergy, density);
+		}
+		
 		return status;
 	}
 	catch (...) 
