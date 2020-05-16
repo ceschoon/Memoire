@@ -29,7 +29,7 @@ cd ..
 
 ### get FCC coexCurves
 
-cp -r ../WHDF_rc2_diagram/coexcurves ./coexCurves_FCC
+cp -r ../WHDF_rc2_diagram/coexCurves/* ./coexCurves_FCC/
 
 ### plot diagram
 

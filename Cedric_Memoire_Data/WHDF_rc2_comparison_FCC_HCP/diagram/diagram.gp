@@ -8,7 +8,7 @@ set ylabel '$kT$'
 
 set style data lines
 set grid
-set key bottom left
+set key at 0.5,0.68 #bottom left
 
 set xrange[0:1.0]
 
