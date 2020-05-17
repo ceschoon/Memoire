@@ -13,4 +13,4 @@ set key top right
 set xrange[0.3:1.5]
 set yrange[0:25]
 
-plot '../data_dft/coexCurveFS_WHDF_rc12.dat' using 1:($7*1e4) with lines linecolor 8 title 'WHDF $r_c=1.2$', \
+plot '../data_dft/coexCurveFS_WHDF_rc12.dat' using 1:($7*1e4) with lines linecolor 1 title 'WHDF $r_c=1.2$', \
