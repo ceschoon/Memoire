@@ -9,3 +9,4 @@ Plotential/*
 !Plotential/*.sh
 !Plotential/CMakeLists.txt
 !Plotential/TEST
+!Plotential/potentials_next_to_diagrams
