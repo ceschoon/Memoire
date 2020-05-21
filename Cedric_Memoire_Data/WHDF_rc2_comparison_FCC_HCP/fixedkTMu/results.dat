@@ -1,0 +1,25 @@
+
+
+Thermodynamic parameters
+kT = 1.3000e+00
+kT = 4.0000e-01
+kT = 8.0000e-01
+mu = 4.5000e+00
+mu = -1.1000e+01
+mu = -3.0000e+00
+
+FCC results
+freeEnergy_min = -5.08948366e+00
+freeEnergy_min = -3.47880092e-01
+freeEnergy_min = -7.37391094e-01
+density_min = 9.35406418e-01
+density_min = 9.00279063e-01
+density_min = 8.33297638e-01
+
+HCP results
+freeEnergy_min = -5.09342778e+00
+freeEnergy_min = -3.68369335e-01
+freeEnergy_min = -7.43405874e-01
+density_min = 9.35436548e-01
+density_min = 9.00713367e-01
+density_min = 8.34454775e-01
