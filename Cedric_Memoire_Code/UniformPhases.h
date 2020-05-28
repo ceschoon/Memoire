@@ -801,6 +801,8 @@ int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log,
 	dataFile << endl;
 	dataFile << "success = " << false << endl;
 	
+	dataFile.close();
+	
 	
 	////////////////// Compute aVdW and hsd parameters /////////////////////
 	
@@ -899,6 +901,8 @@ int fixedkTMuFluid(double kT, double mu, int argc, char** argv, Log &log,
 	dataFile << "supercritical = " << supercritical << endl;
 	dataFile << endl;
 	dataFile << "success = " << true << endl;
+	
+	dataFile.close();
 	
 	return 0;
 }
