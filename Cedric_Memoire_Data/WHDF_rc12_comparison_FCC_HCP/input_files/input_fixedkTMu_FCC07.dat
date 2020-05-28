@@ -1,0 +1,36 @@
+
+nCores = 20
+dx = 0.0125
+ncopy = 1
+IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss325.52978
+DataDirectory = ./dataFCC
+UseAnalyticWeights = false
+
+SolidType = FCC
+
+kT = 0.7
+Mu = 1.0
+RhoFluidMax = 1.5
+RhoFluidMin = 1e-100
+
+eps1 = 1
+sigma1 = 1
+rcut1 = 1.2
+PotentialType = WHDF
+
+Ngrid_rangeMin = 110
+Ngrid_rangeMax = 130
+Ngrid_rangeStep = 1
+Ngrid_maxNumTrials = 4
+
+Cvac_init = 1e-4
+alpha_init = 300
+logStepInit = 0.25
+logStepEnd = 0.0025
+
+Cvac_rangeMin = 1e-8
+Cvac_rangeMax = 1e-1
+alpha_rangeMin = 20
+alpha_rangeMax = 10000
+
+
