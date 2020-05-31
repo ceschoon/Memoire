@@ -1,0 +1,5 @@
+
+DataDirectoryIn = ..//dataVS
+DataDirectoryOut = ..//coexCurves_HCP
+
+FluidType = vapour

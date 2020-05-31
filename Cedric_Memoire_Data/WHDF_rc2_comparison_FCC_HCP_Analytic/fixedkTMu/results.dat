@@ -1,0 +1,63 @@
+
+
+Thermodynamic parameters
+kT = 1.0000e+00
+kT = 1.1000e+00
+kT = 1.2000e+00
+kT = 1.3000e+00
+kT = 4.0000e-01
+kT = 5.0000e-01
+kT = 6.0000e-01
+kT = 7.0000e-01
+kT = 8.0000e-01
+kT = 9.0000e-01
+mu = 5.0000e-01
+mu = 2.0000e+00
+mu = 3.0000e+00
+mu = 4.5000e+00
+mu = -1.1000e+01
+mu = -8.0000e+00
+mu = -6.0000e+00
+mu = -4.5000e+00
+mu = -3.0000e+00
+mu = -1.5000e+00
+
+FCC results
+freeEnergy_min = -2.56330693e+00
+freeEnergy_min = -3.46189425e+00
+freeEnergy_min = -4.00787454e+00
+freeEnergy_min = -5.08943251e+00
+freeEnergy_min = -2.34833168e-01
+freeEnergy_min = -2.20713063e-01
+freeEnergy_min = -3.18108208e-01
+freeEnergy_min = -7.37369358e-01
+freeEnergy_min = -1.36129856e+00
+density_min = 8.71458621e-01
+density_min = 8.93807203e-01
+density_min = 9.05667444e-01
+density_min = 9.35386821e-01
+density_min = 8.81747516e-01
+density_min = 8.61973203e-01
+density_min = 8.42219132e-01
+density_min = 8.33285928e-01
+density_min = 8.38363181e-01
+
+HCP results
+freeEnergy_min = -2.56817063e+00
+freeEnergy_min = -3.46698777e+00
+freeEnergy_min = -4.01166673e+00
+freeEnergy_min = -5.09340849e+00
+freeEnergy_min = -2.47230467e-01
+freeEnergy_min = -2.30613714e-01
+freeEnergy_min = -3.25044149e-01
+freeEnergy_min = -7.43407856e-01
+freeEnergy_min = -1.36643199e+00
+density_min = 8.71753978e-01
+density_min = 8.94156349e-01
+density_min = 9.05933561e-01
+density_min = 9.35430510e-01
+density_min = 8.83052000e-01
+density_min = 8.62659217e-01
+density_min = 8.42333701e-01
+density_min = 8.34454627e-01
+density_min = 8.38671472e-01
