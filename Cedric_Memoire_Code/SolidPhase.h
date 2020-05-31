@@ -768,8 +768,9 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	double mu_rangePrevResult = 0.15;
 	int Ngrid_rangePrevResult = 2;
 	double Cvac_min = 0; // default value
-	double Cvac_step = 0.0001;
-	double Cvac_max = 0.01;
+	double Cvac_step = 1e-3;
+	double Cvac_max = 1e-2;
+	double alpha_start;
 	double alpha_rangeMin;
 	double alpha_rangeMax;
 	double alpha_logStepMin;
@@ -781,6 +782,10 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	options.addOption("kT_rangePrevResult", &kT_rangePrevResult);
 	options.addOption("mu_rangePrevResult", &mu_rangePrevResult);
 	options.addOption("Ngrid_rangePrevResult", &Ngrid_rangePrevResult);
+	options.addOption("Cvac_min", &Cvac_min);
+	options.addOption("Cvac_step", &Cvac_step);
+	options.addOption("Cvac_max", &Cvac_max);
+	options.addOption("alpha_start", &alpha_start);
 	options.addOption("alpha_rangeMin", &alpha_rangeMin);
 	options.addOption("alpha_rangeMax", &alpha_rangeMax);
 	options.addOption("alpha_logStepMin", &alpha_logStepMin);
@@ -867,7 +872,7 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	vector<CompResult> results;
 	bool foundMinimum = false;
 	bool init = true;
-	double alpha_current = alpha_rangeMax;
+	double alpha_current = alpha_start;
 	double alpha_logStep = -alpha_logStepMax;
 		
 	// loop to repeat calculations for different alpha until we find 
@@ -1258,16 +1263,30 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 
 
 int minOverCvacAlpha(double kT, double mu, int Ngrid,
-                       int argc, char** argv, Log &log,
-                       double &freeEnergy_min, double &density_min,
-                       double &Cvac_min, double &alpha_min)
+                     int argc, char** argv, Log &log,
+                     double &freeEnergy_min, double &density_min,
+                     double &Cvac_min, double &alpha_min)
 {
 	int status;
+	string minoveralphaonly = "false";
+	
+	Options options;
+	options.addOption("MinOverAlphaOnly", &minoveralphaonly);
+	options.read(argc, argv);
+	options.write(log);
 	
 	try
 	{
-		status = minOverCvacAlphaNM_noCatch(kT, mu, Ngrid, argc, argv, log,
-			freeEnergy_min, density_min, Cvac_min, alpha_min);
+		if (minoveralphaonly == "true")
+		{
+			status = minOverAlphaOnly(kT, mu, Ngrid, argc, argv, log,
+				freeEnergy_min, density_min, alpha_min);
+		}
+		else // default
+		{
+			status = minOverCvacAlphaNM_noCatch(kT, mu, Ngrid, argc, argv, log,
+				freeEnergy_min, density_min, Cvac_min, alpha_min);
+		}
 	}
 	catch (...) {return 1;}
 	
