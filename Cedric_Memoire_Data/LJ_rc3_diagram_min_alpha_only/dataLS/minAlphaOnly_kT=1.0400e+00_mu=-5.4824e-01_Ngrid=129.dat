@@ -1,0 +1,10 @@
+# Result for min over alpha at 
+kT = 1.0400e+00
+mu = -5.4824e-01
+Ngrid = 129
+
+alpha_min = 9.69233234e+01
+freeEnergy_min = -2.02729079e+00
+density_min = 9.54027342e-01
+
+success = 1
