@@ -58,10 +58,10 @@ set yrange [0.3:1.0]
 set label 4 'F' at 0.28,0.75
 set label 5 'S' at 1.22,0.75
 
-plot '../data/coexCurveVL_WHDF_rc12.dat' using 2:1 linecolor 2 linewidth 3 notitle , \
-     '../data/coexCurveVL_WHDF_rc12.dat' using 3:1 linecolor 2 linewidth 3 notitle , \
-     '../data/coexCurveFS_WHDF_rc12.dat' using 2:1 linecolor 2 linewidth 3 notitle , \
-     '../data/coexCurveFS_WHDF_rc12.dat' using 3:1 linecolor 2 linewidth 3 notitle 
+plot '../data/coexCurveFS_WHDF_rc12.dat' using 2:1 linecolor 2 linewidth 3 notitle , \
+     '../data/coexCurveFS_WHDF_rc12.dat' using 3:1 linecolor 2 linewidth 3 notitle , \
+#     '../data/coexCurveVL_WHDF_rc12.dat' using 2:1 linecolor 2 linewidth 3 notitle , \
+#     '../data/coexCurveVL_WHDF_rc12.dat' using 3:1 linecolor 2 linewidth 3 notitle 
 
 unset label 4
 unset label 5
