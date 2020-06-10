@@ -37,6 +37,7 @@ The code is built upon the classicalDFT library, written by my supervisor James 
 | **Cedric\_Memoire\_Data**  | Where the code is executed and data collected |
 | **Cedric\_Memoire\_Other** | Additional content not related to DFT calculations |
 | **Lib** | classicalDFT library |
+| **SS31-Mar-2016** | Pre-compiled weights for spherical integrations |
 
 ## Branches 
 
