@@ -10,3 +10,11 @@ Plotential/*
 !Plotential/CMakeLists.txt
 !Plotential/TEST
 !Plotential/potentials_next_to_diagrams
+
+Illustration/*
+!Illustration/*.gp
+!Illustration/*.sh
+!Illustration/*.png
+
+
+
