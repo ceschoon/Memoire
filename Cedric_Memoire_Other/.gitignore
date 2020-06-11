@@ -1,3 +1,4 @@
+*.out
 
 Coex_Frenkel/*
 !Coex_Frenkel/*.cpp
