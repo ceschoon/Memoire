@@ -2,4 +2,10 @@
 kT = 1.0000e+00
 mu = 5.1023e+00
 
-success = 0
+freeEnergyVapour = -4.12828961e+00
+freeEnergyLiquid = -4.12828961e+00
+densityVapour    = 7.78132380e-01
+densityLiquid    = 7.78132380e-01
+supercritical = 1
+
+success = 1

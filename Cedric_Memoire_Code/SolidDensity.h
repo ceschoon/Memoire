@@ -107,8 +107,8 @@ class SolidDensity : public Density
 			}
 			
 			// Uncomment these lines to help avoid eta>1 exceptions
-			//double small_value = 1e-6;
-			//if(dsum < small_value) dsum = small_value;
+			double small_value = 1e-10;
+			if(dsum < small_value) dsum = small_value;
 			
 			set_Density_Elem(i,j,k,dsum);
 		}
@@ -148,8 +148,8 @@ class SolidDensity : public Density
 			}
 			
 			// Uncomment these lines to help avoiding eta>1 exceptions
-			//double small_value = 1e-6;
-			//if(dsum < small_value) dsum = small_value;
+			double small_value = 1e-10;
+			if(dsum < small_value) dsum = small_value;
 			
 			set_Density_Elem(i,j,k,dsum);
 		}
@@ -206,8 +206,8 @@ class SolidDensity : public Density
 			}
 			
 			// Uncomment these lines to help avoid eta>1 exceptions
-			//double small_value = 1e-6;
-			//if(dsum < small_value) dsum = small_value;
+			double small_value = 1e-10;
+			if(dsum < small_value) dsum = small_value;
 			
 			set_Density_Elem(i,j,k,dsum);
 		}
@@ -268,8 +268,8 @@ class SolidDensity : public Density
 			}
 			
 			// Uncomment these lines to help avoid eta>1 exceptions
-			//double small_value = 1e-6;
-			//if(dsum < small_value) dsum = small_value;
+			double small_value = 1e-10;
+			if(dsum < small_value) dsum = small_value;
 			
 			set_Density_Elem(i,j,k,dsum);
 		}

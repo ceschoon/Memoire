@@ -3,12 +3,12 @@ kT = 3.2000e-01
 
 fluidType = fluid
 
-muCoex = -9.76539595e+00
-freeEnergyCoex = -5.75734001e-05
-densitySolidCoex = 1.15263262e+00
-NgridCoex = 1.21041148e+02
-CvacCoex = 1.93136072e-03
-alphaCoex = 1.32353662e+03
-densityFluidCoex = 5.75670403e-05
+muCoex = -1.02148489e+01
+freeEnergyCoex = -3.66364791e-05
+densitySolidCoex = 1.17838201e+00
+NgridCoex = 1.20230666e+02
+CvacCoex = -5.48627951e-06
+alphaCoex = 2.72202545e+03
+densityFluidCoex = 3.66711712e-05
 
 success = 1

@@ -7,7 +7,7 @@ DataDirectory = ..//dataFS1
 UseAnalyticWeights = true
 
 kTStart = 0.3
-kTStop = 1.01
+kTStop = 1.51
 kTStep = 0.02
 
 muCoexGuess = -12
@@ -33,7 +33,7 @@ alpha_init = 300
 logStepInit = 0.25
 logStepEnd = 0.0025
 
-Cvac_rangeMin = 1e-8
+Cvac_rangeMin = 1e-10
 Cvac_rangeMax = 1e-1
 alpha_rangeMin = 20
 alpha_rangeMax = 10000

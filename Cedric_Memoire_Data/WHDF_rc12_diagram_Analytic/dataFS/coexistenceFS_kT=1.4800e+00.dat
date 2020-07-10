@@ -1,0 +1,14 @@
+# Result for fluid-solid coexistence at 
+kT = 1.4800e+00
+
+fluidType = fluid
+
+muCoex = 8.97606699e+00
+freeEnergyCoex = -6.82752623e+00
+densitySolidCoex = 1.14925849e+00
+NgridCoex = 1.21229983e+02
+CvacCoex = 1.87989702e-04
+alphaCoex = 4.70029367e+02
+densityFluidCoex = 8.69670508e-01
+
+success = 1

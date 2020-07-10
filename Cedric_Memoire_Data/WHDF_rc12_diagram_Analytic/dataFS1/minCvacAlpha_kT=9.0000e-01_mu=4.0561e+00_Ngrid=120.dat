@@ -3,9 +3,9 @@ kT = 9.0000e-01
 mu = 4.0561e+00
 Ngrid = 120
 
-Cvac_min = 1.83111580e-04
-alpha_min = 1.10925204e+03
-freeEnergy_min = -3.39143424e+00
-density_min = 1.18496816e+00
+Cvac_min = 1.83837625e-04
+alpha_min = 1.10923239e+03
+freeEnergy_min = -3.39143425e+00
+density_min = 1.18496730e+00
 
 success = 1

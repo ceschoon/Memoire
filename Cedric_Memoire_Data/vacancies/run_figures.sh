@@ -5,3 +5,4 @@ cd figures_other_dft;   ./plot.sh; cd ..
 cd figures_sim;         ./plot.sh; cd ..
 cd simple_fluids;       ./plot.sh; cd ..
 cd colloids;            ./plot.sh; cd ..
+cd colloids_Analytic;   ./plot.sh; cd ..

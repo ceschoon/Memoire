@@ -3,6 +3,7 @@
 #dx = 0
 dx = 0.0125
 IntegrationPointsFile = ..//..//..//SS31-Mar-2016//ss325.52978
+UseAnalyticWeights = true
 
 ######## Iteration on kT #######
 

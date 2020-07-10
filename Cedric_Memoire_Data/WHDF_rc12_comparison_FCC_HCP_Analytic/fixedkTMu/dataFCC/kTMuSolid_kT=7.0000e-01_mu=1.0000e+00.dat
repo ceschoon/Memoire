@@ -2,10 +2,10 @@
 kT = 7.0000e-01
 mu = 1.0000e+00
 
-Ngrid_min = 1.20787066e+02
-Cvac_min = 1.19232047e-04
-alpha_min = 1.07886732e+03
-freeEnergy_min = -1.80769662e+00
-density_min = 1.16202957e+00
+Ngrid_min = 1.20766954e+02
+Cvac_min = 1.04871291e-04
+alpha_min = 1.09871086e+03
+freeEnergy_min = -1.80848521e+00
+density_min = 1.16262731e+00
 
 success = 1

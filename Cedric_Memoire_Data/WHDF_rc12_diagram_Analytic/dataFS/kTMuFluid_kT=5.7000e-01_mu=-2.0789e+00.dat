@@ -1,0 +1,11 @@
+# Result for fluid computation at 
+kT = 5.7000e-01
+mu = -2.0789e+00
+
+freeEnergyVapour = -2.85999152e-01
+freeEnergyLiquid = -2.85999152e-01
+densityVapour    = 4.35614922e-01
+densityLiquid    = 4.35614922e-01
+supercritical = 1
+
+success = 1

@@ -5,7 +5,7 @@ Ngrid = 122
 
 Cvac_min = 1.13682719e-04
 alpha_min = 8.63673144e+02
-freeEnergy_min = -7.38940831e-01
+freeEnergy_min = -7.38940830e-01
 density_min = 1.12771949e+00
 
 success = 1
