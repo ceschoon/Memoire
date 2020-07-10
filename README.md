@@ -42,5 +42,6 @@ The code is built upon the classicalDFT library, written by my supervisor James 
 ## Branches 
 
 The main branch is *Cedric_Memoire*. <br>
-The branches *Cedric_Memoire_preFeb2020* and  *Cedric_Memoire_preMay2020* are older versions of the code that I kept as backup. 
-
+The branches *Cedric_Memoire_preFeb2020* and  *Cedric_Memoire_preMay2020* are older versions of the code that I kept as backup. <br>
+The branch *Cedric_Memoire_After_Evaluation* is the continuation of the work after the evaluation of the master's thesis. It therefore contains results not presented in the thesis. <br>
+  
