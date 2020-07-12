@@ -1,0 +1,61 @@
+Remarks concerning the data
+===========================
+
+
+
+1) General remarks
+------------------
+
+The data presented here contains results from computations using either 
+numeric or analytic evaluation of weights. There is little difference 
+except for sensitive quantities like the vacancy concentration or the
+free energy difference between FCC and HCP configurations. The presented
+data comes from analytic calculations only when it was necessary.
+
+
+
+2) Coexistence curves
+---------------------
+
+The files "coexCurvesXX_potential_cutoff.dat" contain physical properties
+at coexistance, as a function of the temperature.
+
+
+
+3) Vacancy concentration
+------------------------
+
+3.1) From gaussian dft calculations
+...................................
+
+See "Cvac" column in the files "coexCurvesXX_potential_cutoff.dat".
+
+At low temperatures, vacancy concentrations are very small and are 
+affected by interpolation errors. The corresponding points can be removed
+from the data set or this should be discussed in the image caption.
+
+3.2) From simulations
+.....................
+
+Simulation results from purohit et al. (2018) are reported in the file
+"simulation_vacancies_LJ.dat". The vacancy concentration is 'phi' and 
+the temperature is 'T'.
+
+3.3) From older DFT calculations
+................................
+
+See files "mcrae1990.dat" and "singh2007.dat" 
+
+
+
+4) FCC-HCP free energy differences
+----------------------------------
+
+See files "FCCvsHCP_potential_cutoff.dat". 
+
+The new data for the colloid case confirms that the free energy difference
+is very small. It is about the order of magnitude of the interpolation 
+errors, so at this level of precision we can not tell which configuration
+is the most stable.
+
+

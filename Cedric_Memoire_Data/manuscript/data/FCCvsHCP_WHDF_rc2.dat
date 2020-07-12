@@ -1,0 +1,12 @@
+# temperatures for WHDF rc=2	# chemical potentials for WHDF rc=2	# FCC free energies for WHDF rc=2	# HCP free energies for WHDF rc=2
+			
+kT = 1.0000e+00	mu = 5.0000e-01	freeEnergy_min = -2.56331144e+00	freeEnergy_min = -2.56816274e+00
+kT = 1.1000e+00	mu = 2.0000e+00	freeEnergy_min = -3.46188351e+00	freeEnergy_min = -3.46697059e+00
+kT = 1.2000e+00	mu = 3.0000e+00	freeEnergy_min = -4.00788588e+00	freeEnergy_min = -4.01166266e+00
+kT = 1.3000e+00	mu = 4.5000e+00	freeEnergy_min = -5.08948366e+00	freeEnergy_min = -5.09342778e+00
+kT = 4.0000e-01	mu = -1.1000e+01	freeEnergy_min = -3.47880092e-01	freeEnergy_min = -3.68369335e-01
+kT = 5.0000e-01	mu = -8.0000e+00	freeEnergy_min = -2.34962057e-01	freeEnergy_min = -2.47206315e-01
+kT = 6.0000e-01	mu = -6.0000e+00	freeEnergy_min = -2.20828463e-01	freeEnergy_min = -2.30631421e-01
+kT = 7.0000e-01	mu = -4.5000e+00	freeEnergy_min = -3.18103084e-01	freeEnergy_min = -3.25013720e-01
+kT = 8.0000e-01	mu = -3.0000e+00	freeEnergy_min = -7.37391094e-01	freeEnergy_min = -7.43405874e-01
+kT = 9.0000e-01	mu = -1.5000e+00	freeEnergy_min = -1.36133952e+00	freeEnergy_min = -1.36644930e+00
