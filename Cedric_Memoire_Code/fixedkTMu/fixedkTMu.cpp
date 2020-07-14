@@ -59,10 +59,12 @@ int main(int argc, char** argv)
 	
 	////////////////// Compute free energy for the solid ///////////////////
 	
-	double freeEnergySolid, densitySolid, Ngrid_min, Cvac_min, alpha_min;
+	double freeEnergySolid, freeEnergySolidErr, densitySolid, 
+	       Ngrid_min, Cvac_min, alpha_min;
 	
 	int statusSolid = fixedkTMuSolid(kT, mu, argc, argv, log, 
-		freeEnergySolid, densitySolid, Ngrid_min, Cvac_min, alpha_min);
+		freeEnergySolid, freeEnergySolidErr, densitySolid, 
+		Ngrid_min, Cvac_min, alpha_min);
 	
 	// Print results in log file
 	
@@ -70,6 +72,7 @@ int main(int argc, char** argv)
 	{
 		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 		log << "Solid Free Energy = " << freeEnergySolid << endl;
+		log << "Solid Free Energy (Error) = " << freeEnergySolidErr << endl;
 		log << "Solid Density = " << densitySolid << endl;
 		
 		log << "Min Ngrid = " << Ngrid_min << endl;

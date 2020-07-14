@@ -55,25 +55,28 @@ using namespace std;
 
 int fixedkTMuSolid(double kT, double mu,
                    int argc, char** argv, Log &log,
-                   double &freeEnergy_min, double &density_min, 
+                   double &freeEnergy_min, double &freeEnergy_err,
+                   double &density_min, 
                    double &Ngrid_min, double &Cvac_min, double &alpha_min);
 
 
 int minOverAlphaOnly(double kT, double mu, int Ngrid,
                      int argc, char** argv, Log &log,
-                     double &freeEnergy_min, double &density_min,
+                     double &freeEnergy_min, double &freeEnergy_err,
+                     double &density_min,
                      double &alpha_min);
 
 
 int minOverCvacAlpha(double kT, double mu, int Ngrid,
                      int argc, char** argv, Log &log,
-                     double &freeEnergy_min, double &density_min,
+                     double &freeEnergy_min, double &freeEnergy_err,
+                     double &density_min,
                      double &Cvac_min, double &alpha_min);
 
 
 int DFTgaussian( int argc, char** argv, Log &log,
                  double kT, double mu, int Ngrid, double Cvac, double alpha,
-                 double &freeEnergy, double &density);
+                 double &freeEnergy, double &freeEnergy_err, double &density);
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -91,9 +94,10 @@ int DFTgaussian( int argc, char** argv, Log &log,
 // TODO: ugly but works, could be re-written
 
 int fixedkTMuSolid(
-	double kT, double mu,                        // input
-	int argc, char** argv, Log &log,             // options for algo behaviour
-	double &freeEnergy_min, double &density_min, // result 
+	double kT, double mu,                            // input
+	int argc, char** argv, Log &log,                 // options for algo behaviour
+	double &freeEnergy_min, double &freeEnergy_err,  // result 
+	double &density_min, 
 	double &Ngrid_min, double &Cvac_min, double &alpha_min)
 {
 	///// log /////
@@ -151,6 +155,7 @@ int fixedkTMuSolid(
 			
 			// read results in file
 			readDataFromFile(dataInFile, "freeEnergy_min", freeEnergy_min);
+			readDataFromFile(dataInFile, "freeEnergy_err", freeEnergy_err);
 			readDataFromFile(dataInFile, "density_min", density_min);
 			readDataFromFile(dataInFile, "Ngrid_min", Ngrid_min);
 			readDataFromFile(dataInFile, "Cvac_min", Cvac_min);
@@ -158,6 +163,7 @@ int fixedkTMuSolid(
 			
 			log << endl;
 			log << "freeEnergy_min = " << freeEnergy_min << endl;
+			log << "freeEnergy_err = " << freeEnergy_err << endl;
 			log << "density_min = " << density_min << endl;
 			log << "Ngrid_min = " << Ngrid_min << endl;
 			log << "Cvac_min = " << Cvac_min << endl;
@@ -199,6 +205,7 @@ int fixedkTMuSolid(
 	{
 		int Ngrid;
 		double freeEnergy;
+		double freeEnergyErr;
 		double density;
 		double Cvac;
 		double alpha;
@@ -277,10 +284,10 @@ int fixedkTMuSolid(
 							
 							log << "Trying file Ngrid=" << Ngrid_candidate << endl;
 							
-							double Cvac, alpha, freeEnergy, density;
+							double Cvac, alpha, freeEnergy, freeEnergyErr, density;
 							int status_minOverCvacAlpha = 
 								minOverCvacAlpha(kT, mu, Ngrid_candidate,
-								argc, argv, log, freeEnergy, density, Cvac, alpha);
+								argc, argv, log, freeEnergy, freeEnergyErr, density, Cvac, alpha);
 							
 							if (status_minOverCvacAlpha==0) // success
 							{
@@ -289,6 +296,7 @@ int fixedkTMuSolid(
 								struct CompResult res;
 								res.Ngrid = Ngrid_candidate;
 								res.freeEnergy = freeEnergy;
+								res.freeEnergyErr = freeEnergyErr;
 								res.density = density;
 								res.Cvac = Cvac;
 								res.alpha = alpha;
@@ -353,10 +361,10 @@ int fixedkTMuSolid(
 			trialsCounter++;
 			if (trialsCounter>Ngrid_maxNumTrials) break;
 			
-			double Cvac, alpha, freeEnergy, density;
+			double Cvac, alpha, freeEnergy, freeEnergyErr, density;
 			int status_minOverCvacAlpha = minOverCvacAlpha(
-				kT, mu, Ngrid, argc, argv, log, freeEnergy, density, 
-				Cvac, alpha);
+				kT, mu, Ngrid, argc, argv, log, freeEnergy, freeEnergyErr,
+				density, Cvac, alpha);
 			
 			if (status_minOverCvacAlpha==0) // success
 			{
@@ -365,6 +373,7 @@ int fixedkTMuSolid(
 				struct CompResult res;
 				res.Ngrid = Ngrid;
 				res.freeEnergy = freeEnergy;
+				res.freeEnergyErr = freeEnergyErr;
 				res.density = density;
 				res.Cvac = Cvac;
 				res.alpha = alpha;
@@ -402,16 +411,17 @@ int fixedkTMuSolid(
 	struct CompResult resPlus; resPlus.Ngrid = lastRes.Ngrid + Ngrid_rangeStep;
 	log << "Trying Ngrid=" << resPlus.Ngrid << endl;
 	
-	double CvacPlus, alphaPlus, freeEnergyPlus, densityPlus;
+	double CvacPlus, alphaPlus, freeEnergyPlus, freeEnergyErrPlus, densityPlus;
 	int status_Plus = minOverCvacAlpha(
-		kT, mu, resPlus.Ngrid, argc, argv, log, freeEnergyPlus, densityPlus, 
-		CvacPlus, alphaPlus);
+		kT, mu, resPlus.Ngrid, argc, argv, log, freeEnergyPlus, freeEnergyErrPlus,
+		densityPlus, CvacPlus, alphaPlus);
 	
 	if (status_Plus==0)
 	{
 		log << "success! freeEnergy=" << freeEnergyPlus << endl;
 		
 		resPlus.freeEnergy = freeEnergyPlus;
+		resPlus.freeEnergyErr = freeEnergyErrPlus;
 		resPlus.density = densityPlus;
 		resPlus.Cvac = CvacPlus;
 		resPlus.alpha = alphaPlus;
@@ -426,16 +436,17 @@ int fixedkTMuSolid(
 	struct CompResult resMinus; resMinus.Ngrid = lastRes.Ngrid - Ngrid_rangeStep;
 	log << "Trying Ngrid=" << resMinus.Ngrid << endl;
 	
-	double CvacMinus, alphaMinus, freeEnergyMinus, densityMinus;
+	double CvacMinus, alphaMinus, freeEnergyMinus, freeEnergyErrMinus, densityMinus;
 	int status_Minus = minOverCvacAlpha(
 		kT, mu, resMinus.Ngrid, argc, argv, log, freeEnergyMinus, 
-		densityMinus, CvacMinus, alphaMinus);
+		freeEnergyErrMinus, densityMinus, CvacMinus, alphaMinus);
 	
 	if (status_Minus==0)
 	{
 		log << "success! freeEnergy=" << freeEnergyMinus << endl;
 		
 		resMinus.freeEnergy = freeEnergyMinus;
+		resMinus.freeEnergyErr = freeEnergyErrMinus;
 		resMinus.density = densityMinus;
 		resMinus.Cvac = CvacMinus;
 		resMinus.alpha = alphaMinus;
@@ -475,16 +486,17 @@ int fixedkTMuSolid(
 		if (resNew.Ngrid > Ngrid_rangeMax || resNew.Ngrid < Ngrid_rangeMin)
 			break;
 		
-		double CvacNew, alphaNew, freeEnergyNew, densityNew;
+		double CvacNew, alphaNew, freeEnergyNew, freeEnergyErrNew, densityNew;
 		int status_New = minOverCvacAlpha(
-			kT, mu, resNew.Ngrid, argc, argv, log, freeEnergyNew, densityNew,
-			CvacNew, alphaNew);
+			kT, mu, resNew.Ngrid, argc, argv, log, freeEnergyNew,
+			freeEnergyErrNew, densityNew, CvacNew, alphaNew);
 		
 		if (status_New==0)
 		{
 			log << "success! freeEnergy=" << freeEnergyNew << endl;
 			
 			resNew.freeEnergy = freeEnergyNew;
+			resNew.freeEnergyErr = freeEnergyErrNew;
 			resNew.density = densityNew;
 			resNew.Cvac = CvacNew;
 			resNew.alpha = alphaNew;
@@ -517,7 +529,7 @@ int fixedkTMuSolid(
 	
 	///// find minimum of interpolation around Ngrid_intMin /////
 	
-	// we make sure that we have at least 3 data points centered around 
+	// we make sure that we have at least 5 data points centered around 
 	// Ngrid_intMin
 	
 	log << endl;
@@ -525,10 +537,14 @@ int fixedkTMuSolid(
 	
 	struct CompResult resMin;
 	struct CompResult resMinPlus;
+	struct CompResult resMinPlus2;
 	struct CompResult resMinMinus;
+	struct CompResult resMinMinus2;
 	
 	bool foundMinMinus = false;
 	bool foundMinPlus  = false;
+	bool foundMinMinus2 = false;
+	bool foundMinPlus2  = false;
 	
 	for (int i=0; i<results.size(); i++)
 	{
@@ -542,10 +558,20 @@ int fixedkTMuSolid(
 			foundMinPlus = true;
 			resMinPlus = res;
 		}
+		if (res.Ngrid==Ngrid_intMin+2) 
+		{
+			foundMinPlus2 = true;
+			resMinPlus2 = res;
+		}
 		if (res.Ngrid==Ngrid_intMin-1) 
 		{
 			foundMinMinus = true;
 			resMinMinus = res;
+		}
+		if (res.Ngrid==Ngrid_intMin-2) 
+		{
+			foundMinMinus2 = true;
+			resMinMinus2 = res;
 		}
 	}
 	
@@ -561,16 +587,17 @@ int fixedkTMuSolid(
 		if (resMinPlus.Ngrid <= Ngrid_rangeMax &&
 		    resMinPlus.Ngrid >= Ngrid_rangeMin)
 		{
-			double Cvac, alpha, freeEnergy, density;
+			double Cvac, alpha, freeEnergy, freeEnergyErr, density;
 			int status_minOverCvacAlpha = minOverCvacAlpha(
 				kT, mu, resMinPlus.Ngrid, argc, argv, log, freeEnergy, 
-				density, Cvac, alpha);
+				freeEnergyErr, density, Cvac, alpha);
 			
 			if (status_minOverCvacAlpha==0)
 			{
 				log << "success! freeEnergy=" << freeEnergy << endl;
 				
 				resMinPlus.freeEnergy = freeEnergy;
+				resMinPlus.freeEnergyErr = freeEnergyErr;
 				resMinPlus.density = density;
 				resMinPlus.Cvac = Cvac;
 				resMinPlus.alpha = alpha;
@@ -591,10 +618,52 @@ int fixedkTMuSolid(
 	
 	
 	// do the calculation if not found
+	bool calcPlus2Failed = true;
+	if (!foundMinPlus2)
+	{
+		resMinPlus2.Ngrid = Ngrid_intMin + 2*Ngrid_rangeStep;
+		
+		log << "Computing missing Ngrid=" << resMinPlus2.Ngrid << endl;
+		
+		// check that we don't cross the range limits
+		if (resMinPlus2.Ngrid <= Ngrid_rangeMax &&
+		    resMinPlus2.Ngrid >= Ngrid_rangeMin)
+		{
+			double Cvac, alpha, freeEnergy, freeEnergyErr, density;
+			int status_minOverCvacAlpha = minOverCvacAlpha(
+				kT, mu, resMinPlus2.Ngrid, argc, argv, log, freeEnergy, 
+				freeEnergyErr, density, Cvac, alpha);
+			
+			if (status_minOverCvacAlpha==0)
+			{
+				log << "success! freeEnergy=" << freeEnergy << endl;
+				
+				resMinPlus2.freeEnergy = freeEnergy;
+				resMinPlus2.freeEnergyErr = freeEnergyErr;
+				resMinPlus2.density = density;
+				resMinPlus2.Cvac = Cvac;
+				resMinPlus2.alpha = alpha;
+				
+				calcPlus2Failed = false;
+			}
+		}
+	}
+	
+	if (!foundMinPlus2 && calcPlus2Failed) // in that case, we cannot proceed to the minimisation
+	{
+		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: No minimum found for kT=" << kT << " and mu=" << mu << endl;
+		log << "       (Failure in neighbour+2 calc for interpolation)" << endl;
+		
+		return 1;
+	}
+	
+	
+	// do the calculation if not found
 	bool calcMinusFailed = true;
 	if (!foundMinMinus)
 	{
-		resMinMinus.Ngrid = Ngrid_intMin + Ngrid_rangeStep;
+		resMinMinus.Ngrid = Ngrid_intMin - Ngrid_rangeStep;
 		
 		log << "Computing missing Ngrid=" << resMinMinus.Ngrid << endl;
 		
@@ -602,16 +671,17 @@ int fixedkTMuSolid(
 		if (resMinMinus.Ngrid <= Ngrid_rangeMax &&
 		    resMinMinus.Ngrid >= Ngrid_rangeMin)
 		{
-			double Cvac, alpha, freeEnergy, density;
+			double Cvac, alpha, freeEnergy, freeEnergyErr, density;
 			int status_minOverCvacAlpha = minOverCvacAlpha(
 				kT, mu, resMinMinus.Ngrid, argc, argv, log, freeEnergy, 
-				density, Cvac, alpha);
+				freeEnergyErr, density, Cvac, alpha);
 			
 			if (status_minOverCvacAlpha==0)
 			{
 				log << "success! freeEnergy=" << freeEnergy << endl;
 				
 				resMinMinus.freeEnergy = freeEnergy;
+				resMinMinus.freeEnergyErr = freeEnergyErr;
 				resMinMinus.density = density;
 				resMinMinus.Cvac = Cvac;
 				resMinMinus.alpha = alpha;
@@ -630,33 +700,110 @@ int fixedkTMuSolid(
 		return 1;
 	}
 	
+	
+	// do the calculation if not found
+	bool calcMinus2Failed = true;
+	if (!foundMinMinus2)
+	{
+		resMinMinus2.Ngrid = Ngrid_intMin - 2*Ngrid_rangeStep;
+		
+		log << "Computing missing Ngrid=" << resMinMinus2.Ngrid << endl;
+		
+		// check that we don't cross the range limits
+		if (resMinMinus2.Ngrid <= Ngrid_rangeMax &&
+		    resMinMinus2.Ngrid >= Ngrid_rangeMin)
+		{
+			double Cvac, alpha, freeEnergy, freeEnergyErr, density;
+			int status_minOverCvacAlpha = minOverCvacAlpha(
+				kT, mu, resMinMinus2.Ngrid, argc, argv, log, freeEnergy, 
+				freeEnergyErr, density, Cvac, alpha);
+			
+			if (status_minOverCvacAlpha==0)
+			{
+				log << "success! freeEnergy=" << freeEnergy << endl;
+				
+				resMinMinus2.freeEnergy = freeEnergy;
+				resMinMinus2.freeEnergyErr = freeEnergyErr;
+				resMinMinus2.density = density;
+				resMinMinus2.Cvac = Cvac;
+				resMinMinus2.alpha = alpha;
+				
+				calcMinus2Failed = false;
+			}
+		}
+	}
+	
+	if (!foundMinMinus2 && calcMinus2Failed) // in that case, we cannot proceed to the minimisation
+	{
+		log <<  myColor::RED << "=================================" << myColor::RESET << endl << "#" << endl;
+		log << "ERROR: No minimum found for kT=" << kT << " and mu=" << mu << endl;
+		log << "       (Failure in neighbour-2 calc for interpolation)" << endl;
+		
+		return 1;
+	}
+	
+	
 	// store in vectors for minimisation
 	
-	vector<int> Ngrid_vec = {resMinMinus.Ngrid, 
+	vector<int> Ngrid_vec = {resMinMinus2.Ngrid, 
+	                         resMinMinus.Ngrid,
 	                         resMin.Ngrid, 
-	                         resMinPlus.Ngrid};
+	                         resMinPlus.Ngrid,
+	                         resMinPlus2.Ngrid};
 	
-	vector<double> freeEnergy_vec = {resMinMinus.freeEnergy, 
+	vector<double> freeEnergy_vec = {resMinMinus2.freeEnergy, 
+	                                 resMinMinus.freeEnergy,
 	                                 resMin.freeEnergy, 
-	                                 resMinPlus.freeEnergy};
+	                                 resMinPlus.freeEnergy,
+	                                 resMinPlus2.freeEnergy};
 	
-	vector<double> density_vec = {resMinMinus.density, 
+	vector<double> freeEnergyErr_vec = {resMinMinus2.freeEnergyErr, 
+	                                    resMinMinus.freeEnergyErr,
+	                                    resMin.freeEnergyErr, 
+	                                    resMinPlus.freeEnergyErr,
+	                                    resMinPlus2.freeEnergyErr};
+	
+	vector<double> density_vec = {resMinMinus2.density, 
+	                              resMinMinus.density,
 	                              resMin.density, 
-	                              resMinPlus.density};
+	                              resMinPlus.density,
+	                              resMinPlus2.density};
 	
-	vector<double> Cvac_vec = {resMinMinus.Cvac, 
+	vector<double> Cvac_vec = {resMinMinus2.Cvac, 
+	                           resMinMinus.Cvac,
 	                           resMin.Cvac, 
-	                           resMinPlus.Cvac};
+	                           resMinPlus.Cvac,
+	                           resMinPlus2.Cvac};
 	
-	vector<double> alpha_vec = {resMinMinus.alpha, 
+	vector<double> alpha_vec = {resMinMinus2.alpha, 
+	                            resMinMinus.alpha,
 	                            resMin.alpha, 
-	                            resMinPlus.alpha};
+	                            resMinPlus.alpha,
+	                            resMinPlus2.alpha};
 	
 	
-	// find (floating-point) minimum from interpolation
+	// Find (floating-point) minimum from interpolation
 	
 	int statusMin = minFromDataParabola(Ngrid_vec, freeEnergy_vec, 
 		Ngrid_min, freeEnergy_min);
+	
+	// Find associated interpolation error
+	
+	double freeEnergyErr_interp;
+	statusMin += errorInDataParabola(Ngrid_vec, freeEnergy_vec, Ngrid_min, freeEnergyErr_interp);
+	
+	// Averaged base (already present) error
+	
+	double freeEnergyErr_base = 0;
+	for (double freeEnergyErr: freeEnergyErr_vec) 
+		freeEnergyErr_base += freeEnergyErr;
+	freeEnergyErr_base /= freeEnergyErr_vec.size();
+	
+	// Combine errors
+	// we add them directly instead of their squares because interpolation
+	// errors are likely to be systematic and not of statistical origin
+	
+	freeEnergy_err = freeEnergyErr_base + freeEnergyErr_interp;
 	
 	// Evaluate other quantities at the minimum
 	
@@ -684,6 +831,7 @@ int fixedkTMuSolid(
 	log << endl;
 	log << "minimum Ngrid = " << Ngrid_min << endl;
 	log << "minimum free energy = " << freeEnergy_min << endl;
+	log << "minimum free energy (error) = " << freeEnergy_err << endl;
 	log << "minimum density = " << density_min << endl;
 	log << "minimum Cvac = " << Cvac_min << endl;
 	log << "minimum alpha = " << alpha_min << endl;
@@ -716,6 +864,7 @@ int fixedkTMuSolid(
 	dataFile << "Cvac_min = " << scientific << setprecision(8) << Cvac_min << endl;
 	dataFile << "alpha_min = " << scientific << setprecision(8) << alpha_min << endl;
 	dataFile << "freeEnergy_min = " << scientific << setprecision(8) << freeEnergy_min << endl;
+	dataFile << "freeEnergy_err = " << scientific << setprecision(8) << freeEnergy_err << endl;
 	dataFile << "density_min = " << scientific << setprecision(8) << density_min << endl;
 	dataFile << endl;
 	dataFile << "success = " << true << endl;
@@ -742,7 +891,8 @@ int fixedkTMuSolid(
 
 int minOverAlphaOnly(double kT, double mu, int Ngrid,
                      int argc, char** argv, Log &log,
-                     double &freeEnergy_min, double &density_min,
+                     double &freeEnergy_min, double &freeEnergy_err,
+                     double &density_min,
                      double &alpha_min)
 {
 	///////////////////////////////// log //////////////////////////////////
@@ -818,11 +968,13 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 			
 			// read results in file
 			readDataFromFile(dataInFile, "freeEnergy_min", freeEnergy_min);
+			readDataFromFile(dataInFile, "freeEnergy_err", freeEnergy_err);
 			readDataFromFile(dataInFile, "density_min", density_min);
 			readDataFromFile(dataInFile, "alpha_min", alpha_min);
 			
 			log << endl;
 			log << "freeEnergy_min = " << freeEnergy_min << endl;
+			log << "freeEnergy_err = " << freeEnergy_err << endl;
 			log << "density_min = " << density_min << endl;
 			log << "alpha_min = " << alpha_min << endl;
 			
@@ -896,7 +1048,10 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 			    << " and Cvac = " << Cvac_current << endl;
 			
 			status_current = DFTgaussian( argc, argv, logDFT, kT, mu, Ngrid, 
-				Cvac_current, alpha_current, freeEnergy_current, density_current);
+				Cvac_current, alpha_current, freeEnergy_current,
+				freeEnergy_err, // assume it doesn't change much and 
+				                // the last computed value is good to report
+				density_current);
 			
 			Cvac_current += Cvac_step;
 		}
@@ -971,6 +1126,7 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 	log << "(Min alpha) Min alpha = " << alpha_min << endl;
 	log << "(Min alpha) Min freeEnergy = " << freeEnergy_min << endl;
+	log << "(Min alpha) Min freeEnergy Error = " << freeEnergy_err << endl;
 	log << "(Min alpha) Min density = " << density_min << endl;
 	
 	
@@ -990,6 +1146,7 @@ int minOverAlphaOnly(double kT, double mu, int Ngrid,
 	dataFile << endl;
 	dataFile << "alpha_min = " << scientific << setprecision(8) << alpha_min << endl;
 	dataFile << "freeEnergy_min = " << scientific << setprecision(8) << freeEnergy_min << endl;
+	dataFile << "freeEnergy_err = " << scientific << setprecision(8) << freeEnergy_err << endl;
 	dataFile << "density_min = " << scientific << setprecision(8) << density_min << endl;
 	dataFile << endl;
 	dataFile << "success = " << true << endl;
@@ -1036,9 +1193,10 @@ double myfun_DFT (const gsl_vector *v, void *params)
 	
 	Log logDFT("log_DFT.dat");
 	
-	double freeEnergy,density;
+	double freeEnergy,freeEnergy_err,density;
 	int status = DFTgaussian( argc, argv, logDFT,
-	             kT, mu, Ngrid, Cvac, alpha, freeEnergy, density);
+	             kT, mu, Ngrid, Cvac, alpha, freeEnergy, freeEnergy_err,
+	             density);
 	
 	if (status==0) return freeEnergy;
 	//else return GSL_NAN;
@@ -1052,7 +1210,8 @@ double myfun_DFT (const gsl_vector *v, void *params)
 
 int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
                        int argc, char** argv, Log &log,
-                       double &freeEnergy_min, double &density_min,
+                       double &freeEnergy_min, double &freeEnergy_err,
+                       double &density_min,
                        double &Cvac_min, double &alpha_min)
 {
 	///////////////////////////////// log //////////////////////////////////
@@ -1213,7 +1372,8 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 	
 	Log logDFT("log_DFT.dat");
 	int statusMin = DFTgaussian( argc, argv, logDFT,
-		kT, mu, Ngrid, Cvac_min, alpha_min, freeEnergy_min, density_min);
+		kT, mu, Ngrid, Cvac_min, alpha_min, freeEnergy_min,
+		freeEnergy_err, density_min);
 	
 	if (statusMin!=0)
 	{
@@ -1227,6 +1387,7 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 	log << "(Min Cvac,alpha) Min Cvac = " << Cvac_min << endl;
 	log << "(Min Cvac,alpha) Min alpha = " << alpha_min << endl;
 	log << "(Min Cvac,alpha) Min freeEnergy = " << freeEnergy_min << endl;
+	log << "(Min Cvac,alpha) Min freeEnergy Error = " << freeEnergy_err << endl;
 	log << "(Min Cvac,alpha) Min density = " << density_min << endl;
 	
 	
@@ -1247,6 +1408,7 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 	dataFile << "Cvac_min = " << scientific << setprecision(8) << Cvac_min << endl;
 	dataFile << "alpha_min = " << scientific << setprecision(8) << alpha_min << endl;
 	dataFile << "freeEnergy_min = " << scientific << setprecision(8) << freeEnergy_min << endl;
+	dataFile << "freeEnergy_err = " << scientific << setprecision(8) << freeEnergy_err << endl;
 	dataFile << "density_min = " << scientific << setprecision(8) << density_min << endl;
 	dataFile << endl;
 	dataFile << "success = " << true << endl;
@@ -1264,7 +1426,8 @@ int minOverCvacAlphaNM_noCatch(double kT, double mu, int Ngrid,
 
 int minOverCvacAlpha(double kT, double mu, int Ngrid,
                      int argc, char** argv, Log &log,
-                     double &freeEnergy_min, double &density_min,
+                     double &freeEnergy_min, double &freeEnergy_err,
+                     double &density_min,
                      double &Cvac_min, double &alpha_min)
 {
 	int status;
@@ -1280,12 +1443,12 @@ int minOverCvacAlpha(double kT, double mu, int Ngrid,
 		if (minoveralphaonly == "true")
 		{
 			status = minOverAlphaOnly(kT, mu, Ngrid, argc, argv, log,
-				freeEnergy_min, density_min, alpha_min);
+				freeEnergy_min, freeEnergy_err, density_min, alpha_min);
 		}
 		else // default
 		{
 			status = minOverCvacAlphaNM_noCatch(kT, mu, Ngrid, argc, argv, log,
-				freeEnergy_min, density_min, Cvac_min, alpha_min);
+				freeEnergy_min, freeEnergy_err, density_min, Cvac_min, alpha_min);
 		}
 	}
 	catch (...) {return 1;}
@@ -1883,6 +2046,7 @@ int DFTgaussianNoCatch_Hex( OptionsDFTgaussian optionsDFT, Log &log,
 struct CompResult 
 {
 	double freeEnergy;
+	double freeEnergyErr;
 	double density;
 };
 
@@ -1890,7 +2054,8 @@ struct CompResult
 int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
                  double kT, double mu, int Ngrid,
                  double Cvac, double alpha,
-                 double &freeEnergy, double &density)
+                 double &freeEnergy, double &freeEnergy_err, 
+                 double &density)
 {
 	// Parameters for DFT computations
 	
@@ -1920,15 +2085,15 @@ int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
 	
 	// Computations for all number of grid points
 	
-	CompResult results_yz[3][3];
+	CompResult results_yz[5][5];
 	bool success = true;
 	
 	// TODO: curently unable to parallelise the code
 	//#pragma omp parallel for
-	for (int ij=0; ij<3*3; ij++)
+	for (int ij=0; ij<5*5; ij++)
 	{
-		int i = ij/3;
-		int j = ij%3;
+		int i = ij/5;
+		int j = ij%5;
 		
 		stringstream ssLog;
 		ssLog << "log_dummy_" << i << "_" << j << ".dat";
@@ -1937,7 +2102,7 @@ int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
 		int Ngridy_i = Ngridy + (i-1);
 		int Ngridz_j = Ngridz + (j-1);
 		
-		double freeEnergy_ij, density_ij;
+		double freeEnergy_ij, freeEnergyErr_ij, density_ij;
 		
 		int status = DFTgaussianNoCatch_Hex( optionsDFT, log_dummy, kT, mu, 
 			Ngridx, Ngridy_i, Ngridz_j, Cvac, alpha, freeEnergy_ij, density_ij);
@@ -1945,6 +2110,7 @@ int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
 		if (status!=0) success = false;
 		
 		results_yz[i][j].freeEnergy = freeEnergy_ij;
+		results_yz[i][j].freeEnergyErr = 0;  // assume it is negligible
 		results_yz[i][j].density = density_ij;
 	}
 	
@@ -1952,49 +2118,68 @@ int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
 	
 	// Interpolation in the z-direction
 	
-	CompResult results_y[3];
+	CompResult results_y[5];
 	
-	for(int i=0; i<3; i++)
+	for(int i=0; i<5; i++)
 	{
-		vector<double> Ngridz_vec(3,0);
-		vector<double> freeEnergy_vec(3,0);
-		vector<double> density_vec(3,0);
+		vector<double> Ngridz_vec(5,0);
+		vector<double> freeEnergy_vec(5,0);
+		vector<double> density_vec(5,0);
 		
-		for (int j=0; j<3; j++) 
+		for (int j=0; j<5; j++) 
 		{
 			Ngridz_vec[j] = Ngridz + (j-1);
 			freeEnergy_vec[j] = results_yz[i][j].freeEnergy;
 			density_vec[j] = results_yz[i][j].density;
 		}
 		
-		evalFromDataInterpolation(Ngridz_vec, freeEnergy_vec, 
-		                          Ngridz_trueHCP, freeEnergy);
+		evalFromDataParabola(Ngridz_vec, freeEnergy_vec, 
+		                     Ngridz_trueHCP, freeEnergy);
 		
-		evalFromDataInterpolation(Ngridz_vec, density_vec, 
-		                          Ngridz_trueHCP, density);
+		errorInDataParabola(Ngridz_vec, freeEnergy_vec, 
+		                    Ngridz_trueHCP, freeEnergy_err);
+		
+		evalFromDataParabola(Ngridz_vec, density_vec, 
+		                     Ngridz_trueHCP, density);
 		
 		results_y[i].freeEnergy = freeEnergy;
+		results_y[i].freeEnergyErr = freeEnergy_err;
 		results_y[i].density = density;
 	}
 	
 	// Interpolation in the y-direction
 	
-	vector<double> Ngridy_vec(3,0);
-	vector<double> freeEnergy_vec(3,0);
-	vector<double> density_vec(3,0);
+	vector<double> Ngridy_vec(5,0);
+	vector<double> freeEnergy_vec(5,0);
+	vector<double> density_vec(5,0);
 	
-	for (int j=0; j<3; j++) 
+	double freeEnergy_erry, freeEnergy_errz;
+	
+	for (int j=0; j<5; j++) 
 	{
 		Ngridy_vec[j] = Ngridy + (j-1);
 		freeEnergy_vec[j] = results_y[j].freeEnergy;
 		density_vec[j] = results_y[j].density;
 	}
 	
-	evalFromDataInterpolation(Ngridy_vec, freeEnergy_vec, 
-	                          Ngridy_trueHCP, freeEnergy);
+	evalFromDataParabola(Ngridy_vec, freeEnergy_vec, 
+	                     Ngridy_trueHCP, freeEnergy);
 	
-	evalFromDataInterpolation(Ngridy_vec, density_vec, 
-	                          Ngridy_trueHCP, density);
+	// error of y-interp
+	errorInDataParabola(Ngridy_vec, freeEnergy_vec, 
+	                    Ngridy_trueHCP, freeEnergy_erry);
+	
+	evalFromDataParabola(Ngridy_vec, density_vec, 
+	                     Ngridy_trueHCP, density);
+	
+	// mean error of z-interp (seems reasonable to consider the mean)
+	for (int j=0; j<5; j++) freeEnergy_errz += results_y[j].freeEnergyErr;
+	freeEnergy_errz /= 5;
+	
+	// combine both error sources
+	// we add them directly instead of their squares because interpolation
+	// errors are likely to be systematic and not of statistical origin
+	freeEnergy_err = freeEnergy_errz + freeEnergy_erry;
 	
 	return 0;
 }
@@ -2016,7 +2201,7 @@ int DFTgaussianNoCatch_HCP( int argc, char** argv, Log &log,
 
 int DFTgaussian( int argc, char** argv, Log &log,
                  double kT, double mu, int Ngrid, double Cvac, double alpha,
-                 double &freeEnergy, double &density)
+                 double &freeEnergy, double &freeEnergy_err, double &density)
 {
 	string solidType = "FCC";
 	
@@ -2032,12 +2217,17 @@ int DFTgaussian( int argc, char** argv, Log &log,
 		if (solidType=="HCP") 
 		{
 			status = DFTgaussianNoCatch_HCP( argc, argv, log, kT, mu, Ngrid, 
-			                                 Cvac, alpha, freeEnergy, density);
+			                                 Cvac, alpha, freeEnergy, 
+			                                 freeEnergy_err, density);
 		}
 		else
 		{
 			status = DFTgaussianNoCatch( argc, argv, log, kT, mu, Ngrid, 
 			                             Cvac, alpha, freeEnergy, density);
+			
+			// we track interpolation errors, there is none here
+			// we assume other kind of errors to be negligible
+			freeEnergy_err = 0;
 		}
 		
 		return status;

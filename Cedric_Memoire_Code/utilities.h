@@ -63,4 +63,12 @@ int evalFromDataParabola(vector<double> x, vector<double> y, double xIn,
 int evalFromDataParabola(vector<int> x, vector<double> y, double xIn,
                               double &yOut);
 
+// Estimation od the error in parabolic interpolation
+
+int errorInDataParabola(vector<double> x, vector<double> y, double xIn,
+                        double &yErr);
+int errorInDataParabola(vector<int> x, vector<double> y, double xIn,
+                        double &yErr);
+
+
 

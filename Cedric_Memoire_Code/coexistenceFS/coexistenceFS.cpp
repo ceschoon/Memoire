@@ -48,10 +48,12 @@ int muComputation( double kT, double mu,
 {
 	// Compute free energy for the solid
 	
-	double freeEnergySolid, densitySolid, Ngrid_min, Cvac_min, alpha_min;
+	double freeEnergySolid, freeEnergySolidErr, densitySolid, 
+	       Ngrid_min, Cvac_min, alpha_min;
 	
 	int statusSolid = fixedkTMuSolid(kT, mu, argc, argv, log, 
-		freeEnergySolid, densitySolid, Ngrid_min, Cvac_min, alpha_min);
+		freeEnergySolid, freeEnergySolidErr, densitySolid, 
+		Ngrid_min, Cvac_min, alpha_min);
 	
 	// Compute free energy for the fluid
 	
@@ -118,6 +120,7 @@ int muComputation( double kT, double mu,
 	{
 		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 		log << "Solid Free Energy = " << freeEnergySolid << endl;
+		log << "Solid Free Energy (Error) = " << freeEnergySolidErr << endl;
 		log << "Solid Density     = " << densitySolid << endl;
 		log << "Ngrid = " << Ngrid_min << endl;
 		log << "Cvac  = " << Cvac_min  << endl;
@@ -433,14 +436,14 @@ int main(int argc, char** argv)
 			zeroFromDataInterpolation(mu_vec, freeEnergyDiff_vec, muCoex);
 			
 			// find min free energy
-			evalFromDataInterpolation(mu_vec, freeEnergySolid_vec, muCoex, freeEnergyCoex);
+			evalFromDataParabola(mu_vec, freeEnergySolid_vec, muCoex, freeEnergyCoex);
 			
 			// find min densities
-			evalFromDataInterpolation(mu_vec, densitySolid_vec, muCoex, densitySolidCoex);
-			evalFromDataInterpolation(mu_vec, Ngrid_vec, muCoex, NgridCoex);
-			evalFromDataInterpolation(mu_vec, Cvac_vec, muCoex, CvacCoex);
-			evalFromDataInterpolation(mu_vec, alpha_vec, muCoex, alphaCoex);
-			evalFromDataInterpolation(mu_vec, densityFluid_vec, muCoex, densityFluidCoex);
+			evalFromDataParabola(mu_vec, densitySolid_vec, muCoex, densitySolidCoex);
+			evalFromDataParabola(mu_vec, Ngrid_vec, muCoex, NgridCoex);
+			evalFromDataParabola(mu_vec, Cvac_vec, muCoex, CvacCoex);
+			evalFromDataParabola(mu_vec, alpha_vec, muCoex, alphaCoex);
+			evalFromDataParabola(mu_vec, densityFluid_vec, muCoex, densityFluidCoex);
 		}
 		else
 		{

@@ -180,13 +180,14 @@ int surfacePlot( double kT, double mu, int Ngrid,
 			log << "Computing for Cvac = " << Cvac << " and alpha = " 
 			    << alpha << endl;
 			
-			double freeEnergy, density;
+			double freeEnergy, freeEnergyErr, density;
 			int statusDFT = DFTgaussian( argc, argv, logDFT, kT, mu, Ngrid, 
-				Cvac, alpha, freeEnergy, density);
+				Cvac, alpha, freeEnergy, freeEnergyErr, density);
 			
 			if (statusDFT==0)
 			{
 				log << "freeEnergy = " << freeEnergy << endl;
+				log << "freeEnergy (Error) = " << freeEnergyErr << endl;
 				surfacePlotFile << std::log(Cvac)  / std::log(10) << " 	"
 				                << std::log(alpha) / std::log(10) << " 	"
 				                << freeEnergy << endl;

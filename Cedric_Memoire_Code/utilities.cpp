@@ -619,3 +619,89 @@ int evalFromDataParabola(vector<int> x, vector<double> y, double xIn,
 }
 
 
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+// Estimation od the error in parabolic interpolation
+
+int errorInDataParabola(vector<double> x, vector<double> y, double xIn,
+                        double &yErr)
+{
+	// search data point that is the closest to xIn
+	
+	int N = x.size();
+	int iTarget = 0;
+	
+	for (int i=0; i<x.size(); i++)
+	{
+		double d2_i = (x[i]-xIn)*(x[i]-xIn);
+		double d2_current = (x[iTarget]-xIn)*(x[iTarget]-xIn);
+		if (d2_i<d2_current) iTarget = i;
+	}
+	
+	// data points
+	
+	double xm2 = x[iTarget-2];
+	double xm1 = x[iTarget-1];
+	double x0  = x[iTarget];
+	double xp1 = x[iTarget+1];
+	double xp2 = x[iTarget+2];
+	
+	double ym2 = y[iTarget-2];
+	double ym1 = y[iTarget-1];
+	double y0  = y[iTarget];
+	double yp1 = y[iTarget+1];
+	double yp2 = y[iTarget+2];
+	
+	// Our estimation of the error is the ()^3 term of the Taylor series
+	// of y expanded around xTarget, when evaluated at xIn
+	
+	// y(xIn) = y(x0) + (xIn-x0) * y'(x0) + 1/2 (xIn-x0)^2 * y''(x0)
+	//        + 1/6 * (xIn-x0)^3 * y'''(x0) + 1/24 * (xIn-x0)^4 * yiv(x0)
+	//        + ...
+	
+	// The parabolic approximation fits the three first terms of the
+	// Taylor expansion. We assume the rest is dominated by the now
+	// leading terms in ()^3 and ()^4:
+	
+	// yErr = y(xIn) - y_parabola(xIn) = 1/6 * (xIn-x0)^3 * y'''(x0) + neg.
+	
+	// We evaluate the third and fourth derivatives with a central 
+	// difference scheme. The two derivatives requires the same number of
+	// data points, this is why we don't neglect the fourth derivative.
+	
+	// y'''(x0) = ( -1/2*y(x0-2*dx) + y(x0-dx) - y(x0+dx) + 1/2*y(x0+2*dx) )
+	//            * 1/dx^3 + O(dx^2)
+	
+	// yiv(x0) = ( y(x0-2*dx) - 4*y(x0-dx) + 6*y(x0) - 4*y(x0+dx) + y(x0+2*dx) )
+	//            * 1/dx^4 + O(dx^2)
+	
+	double dx3 = (xp1-x0)*(xp1-x0)*(xp1-x0);
+	double dx4 = (xp1-x0)*dx3;
+	double d3y_x0 = (-1.0/2*ym2 + ym1 - yp1 + 1.0/2*yp2) / dx3;
+	double d4y_x0 = (ym2 - 4*ym1 + 6*y0 - 4*yp1 + yp2) / dx4;
+	
+	yErr = 1/6  * (xIn-x0)*(xIn-x0)*(xIn-x0)          * d3y_x0
+	     + 1/24 * (xIn-x0)*(xIn-x0)*(xIn-x0)*(xIn-x0) * d4y_x0;
+	
+	if (yErr<0) yErr *= -1; // error must be positive 
+	
+	return 0;
+}
+
+
+int errorInDataParabola(vector<int> x, vector<double> y, double xIn,
+                        double &yErr)
+{
+	vector<double> xd(x.size(),0);
+	for (int i=0; i<x.size(); i++) xd[i] = x[i];
+	
+	return errorInDataParabola(xd,y,xIn,yErr);
+}

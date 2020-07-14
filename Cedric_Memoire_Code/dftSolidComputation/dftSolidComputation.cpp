@@ -65,10 +65,10 @@ int main(int argc, char** argv)
 	
 	////////////////// Compute free energy for the solid ///////////////////
 	
-	double freeEnergy, density;
+	double freeEnergy, freeEnergyErr, density;
 	
 	int status = DFTgaussian( argc, argv, log, kT, mu, Ngrid, Cvac, alpha,
-	                          freeEnergy, density );
+	                          freeEnergy, freeEnergyErr, density );
 	
 	// Print results in log file
 	
@@ -76,6 +76,7 @@ int main(int argc, char** argv)
 	{
 		log <<  myColor::GREEN << "=================================" << myColor::RESET << endl << "#" << endl;
 		log << "Free Energy = " << freeEnergy << endl;
+		log << "Free Energy (Error) = " << freeEnergyErr << endl;
 		log << "Density = " << density << endl;
 	}
 	else
