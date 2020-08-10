@@ -2,6 +2,9 @@ Remarks concerning the data
 ===========================
 
 
+EDIT: This does not concern the formatted data for Lutsko
+      The formatted data is in the directory "data_formatted"
+
 
 1) General remarks
 ------------------

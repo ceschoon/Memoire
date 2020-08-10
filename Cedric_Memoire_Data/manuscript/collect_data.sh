@@ -21,7 +21,7 @@ cd ..
 # collect LJ simulation data for vacancy concentration
 
 touch data/simulation_vacancies_LJ.dat
-echo "# Note: The vacancy concentration is 'phi'" >> data/simulation_vacancies_LJ.dat
+echo "# Note: The vacancy concentration is 'phi'" > data/simulation_vacancies_LJ.dat
 echo "# " >> data/simulation_vacancies_LJ.dat
 cat ../vacancies/data_sim/out_purohit2018_coex.dat  >> data/simulation_vacancies_LJ.dat
 

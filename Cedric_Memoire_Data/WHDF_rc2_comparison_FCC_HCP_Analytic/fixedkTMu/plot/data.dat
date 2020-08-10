@@ -4,9 +4,8 @@ kT = 1.0000e+00	mu = 5.0000e-01	freeEnergy_min = -2.56330693e+00	freeEnergy_min 
 kT = 1.1000e+00	mu = 2.0000e+00	freeEnergy_min = -3.46189425e+00	freeEnergy_min = -3.46698777e+00
 kT = 1.2000e+00	mu = 3.0000e+00	freeEnergy_min = -4.00787454e+00	freeEnergy_min = -4.01166673e+00
 kT = 1.3000e+00	mu = 4.5000e+00	freeEnergy_min = -5.08943251e+00	freeEnergy_min = -5.09340849e+00
-kT = 4.0000e-01	mu = -1.1000e+01	freeEnergy_min = -2.34833168e-01	freeEnergy_min = -2.47230467e-01
-kT = 5.0000e-01	mu = -8.0000e+00	freeEnergy_min = -2.20713063e-01	freeEnergy_min = -2.30613714e-01
-kT = 6.0000e-01	mu = -6.0000e+00	freeEnergy_min = -3.18108208e-01	freeEnergy_min = -3.25044149e-01
-kT = 7.0000e-01	mu = -4.5000e+00	freeEnergy_min = -7.37369358e-01	freeEnergy_min = -7.43407856e-01
-kT = 8.0000e-01	mu = -3.0000e+00	freeEnergy_min = -1.36129856e+00	freeEnergy_min = -1.36643199e+00
-kT = 9.0000e-01	mu = -1.5000e+00		
+kT = 5.0000e-01	mu = -8.0000e+00	freeEnergy_min = -2.34833168e-01	freeEnergy_min = -2.47230467e-01
+kT = 6.0000e-01	mu = -6.0000e+00	freeEnergy_min = -2.20713063e-01	freeEnergy_min = -2.30613714e-01
+kT = 7.0000e-01	mu = -4.5000e+00	freeEnergy_min = -3.18108208e-01	freeEnergy_min = -3.25044149e-01
+kT = 8.0000e-01	mu = -3.0000e+00	freeEnergy_min = -7.37369358e-01	freeEnergy_min = -7.43407856e-01
+kT = 9.0000e-01	mu = -1.5000e+00	freeEnergy_min = -1.36129856e+00	freeEnergy_min = -1.36643199e+00
