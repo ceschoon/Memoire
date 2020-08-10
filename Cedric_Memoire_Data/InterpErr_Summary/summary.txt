@@ -1,0 +1,48 @@
+
+# Errors in HCP interpolation (WHDF rc=2.0)
+freeEnergy_err = 2.80660666e-03
+freeEnergy_err = 2.82416916e-03
+freeEnergy_err = 3.12896390e-04
+freeEnergy_err = 1.77528682e-04
+freeEnergy_err = 3.62379651e-04
+freeEnergy_err = 9.41434615e-04
+freeEnergy_err = 1.63665239e-03
+mean = 1.29e-03
+
+
+# Errors in HCP interpolation (WHDF rc=1.2)
+freeEnergy_err = 1.84919063e-02
+freeEnergy_err = 1.11726846e-02
+freeEnergy_err = 1.07125724e-02
+freeEnergy_err = 1.35662277e-02
+freeEnergy_err = 1.60245982e-02
+mean = 1.40e-02
+
+
+# Errors in min wrt Ngrid (WHDF rc=2.0 coex VS) (print a few)
+freeEnergy_err = 9.18970101e-06
+freeEnergy_err = 3.42161865e-05
+freeEnergy_err = 8.45043333e-05
+freeEnergy_err = 1.68203632e-04
+freeEnergy_err = 1.07360777e-04
+freeEnergy_err = 3.88435373e-05
+freeEnergy_err = 8.42871568e-06
+freeEnergy_err = 1.36714028e-06
+freeEnergy_err = 1.69089413e-08
+freeEnergy_err = 4.15830607e-06
+mean = 2.84e-05
+
+
+# Errors in min wrt Ngrid (WHDF rc=2.0 coex LS) (print a few)
+freeEnergy_err = 3.89011831e-05
+freeEnergy_err = 7.07564237e-07
+freeEnergy_err = 2.23761911e-06
+freeEnergy_err = 2.59542600e-05
+freeEnergy_err = 7.34530331e-06
+freeEnergy_err = 2.46220182e-07
+freeEnergy_err = 2.63877454e-05
+freeEnergy_err = 6.45273204e-08
+freeEnergy_err = 1.13588351e-05
+freeEnergy_err = 1.78110031e-06
+mean = 1.48e-05
+
