@@ -91,7 +91,8 @@ paste data_formatted/vacancies_LJ_rc3_VS_x.temp \
 mv data_formatted/vacancies_gaussian.dat.out \
    data_formatted/vacancies_gaussian.dat
 
-
+mv data_formatted/vacancies_gaussian.dat \
+   data_formatted/Fig.vacancies_gaussian.dat
 
 
 
@@ -160,7 +161,8 @@ paste data_formatted/vacancies_LJ_rc4_LS_x.temp \
 mv data_formatted/vacancies_reflit.dat.out \
    data_formatted/vacancies_reflit.dat
 
-
+mv data_formatted/vacancies_reflit.dat \
+   data_formatted/Fig.vacancies_reflit.dat
 
 
 
@@ -220,6 +222,10 @@ paste data_formatted/FCCvsHCP_WHDF_rc2_kT.temp \
 
 mv data_formatted/FCCvsHCP_WHDF.dat.out \
    data_formatted/FCCvsHCP_WHDF.dat
+
+mv data_formatted/FCCvsHCP_WHDF.dat \
+   data_formatted/Fig.FCCvsHCP_WHDF.dat
+
 
 
 
