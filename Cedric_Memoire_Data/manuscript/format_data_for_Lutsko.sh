@@ -86,10 +86,10 @@ paste data_formatted/vacancies_LJ_rc3_VS_x.temp \
       data_formatted/vacancies_WHDF_rc12_FS_y.temp \
       >> data_formatted/vacancies_gaussian.dat
 
-./code_formatting/align_correctly data_formatted/vacancies_gaussian.dat 14
+#./code_formatting/align_correctly data_formatted/vacancies_gaussian.dat 14
 
-mv data_formatted/vacancies_gaussian.dat.out \
-   data_formatted/vacancies_gaussian.dat
+#mv data_formatted/vacancies_gaussian.dat.out \
+#   data_formatted/vacancies_gaussian.dat
 
 mv data_formatted/vacancies_gaussian.dat \
    data_formatted/Fig.vacancies_gaussian.dat
@@ -156,10 +156,10 @@ paste data_formatted/vacancies_LJ_rc4_LS_x.temp \
       data_formatted/vacancies_singh2007_y.temp \
       >> data_formatted/vacancies_reflit.dat
 
-./code_formatting/align_correctly data_formatted/vacancies_reflit.dat 8
+#./code_formatting/align_correctly data_formatted/vacancies_reflit.dat 8
 
-mv data_formatted/vacancies_reflit.dat.out \
-   data_formatted/vacancies_reflit.dat
+#mv data_formatted/vacancies_reflit.dat.out \
+#   data_formatted/vacancies_reflit.dat
 
 mv data_formatted/vacancies_reflit.dat \
    data_formatted/Fig.vacancies_reflit.dat
@@ -218,10 +218,10 @@ paste data_formatted/FCCvsHCP_WHDF_rc2_kT.temp \
       data_formatted/FCCvsHCP_WHDF_rc12_diff.temp \
       >> data_formatted/FCCvsHCP_WHDF.dat
 
-./code_formatting/align_correctly data_formatted/FCCvsHCP_WHDF.dat 10
+#./code_formatting/align_correctly data_formatted/FCCvsHCP_WHDF.dat 10
 
-mv data_formatted/FCCvsHCP_WHDF.dat.out \
-   data_formatted/FCCvsHCP_WHDF.dat
+#mv data_formatted/FCCvsHCP_WHDF.dat.out \
+#   data_formatted/FCCvsHCP_WHDF.dat
 
 mv data_formatted/FCCvsHCP_WHDF.dat \
    data_formatted/Fig.FCCvsHCP_WHDF.dat
